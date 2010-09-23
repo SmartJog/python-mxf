@@ -3,6 +3,7 @@ mxf_PYTHON = \
 	__init__.py \
 	avid.py \
 	common.py \
+	parser.py \
 	rp210.py \
 	s377m.py
 
