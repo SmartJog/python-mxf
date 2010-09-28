@@ -66,15 +66,7 @@ class RP210(object):
             try:
                 return "u16 %s" % (value.decode('utf_16_be')[:-1])
             except UnicodeDecodeError:
-                # Might be a weird Avid String
-                try:
-                    return "au16: [%s]" % (value[17:].encode("hex_codec"))
-                except UnicodeDecodeError:
-                    # Might be Avid duration (int64, written in reverse hex order)
-                    dur = 0
-                    for idx in range(1, 5):
-                        dur = dur << 8 | ord(value[-idx])
-                    return "Avid Length: %d" % (dur)
+                return None
 
         elif re.match('U?Int ?(8|16|32|64)', vtype, re.I):
             length = InterchangeObject.ber_decode_length(value, len(value))
@@ -192,6 +184,72 @@ class RP210(object):
             return self._convert_single(vtype, value)
 
         return "Cannot convert type %s: %s" % (eul, edata)
+
+
+class RP210Avid(RP210):
+    """ Avid RP210 variant helper class.
+
+    Helper class to convert MXF data types to python objects and vice-versa.
+    """
+
+    def __init__(self):
+        RP210.__init__(self)
+        # Adding Avid format UL
+        avid_items = {
+            '8b4ebaf0ca0940b554405d72bfbd4b0e': ('Int32', 'Avid Int32? 1', ''),
+            '8bb3ad5a842b0585f6e59f10248e494c': ('Int16', 'Avid Int16? 2', ''),
+            '93c0b44a156ed52a945df2faf4654771': ('Int16', 'Avid Int16? 3', ''),
+
+            'a01c0004ac969f506095818347b111d4': ('StrongReferenceArray', 'Avid Metadata 1', 'AvidDef1'),
+            'a01c0004ac969f506095818547b111d4': ('StrongReferenceArray', 'Avid Metadata 2', 'AvidDef2'),
+
+            'a024006094eb75cbce2aca4d51ab11d3': ('Int32', 'Avid Int32? 4', ''),
+            'a024006094eb75cbce2aca4f51ab11d3': ('Int32', 'Avid Int32? 5', ''),
+            'a024006094eb75cbce2aca5051ab11d3': ('Int32', 'Avid Int32? 6', ''),
+            'a029006094eb75cb9d15fca354c511d3': ('Int32', 'Avid Int32? 7', ''),
+            'a9bac6e98e92018d36a2806248054b21': ('Int32', 'Avid Int32? 8', ''),
+
+            'a573fa765aa6468a06e929b37d154fd7': ('Int16', 'Avid Int16? 9', ''),
+            'a577a500581c9f050fbf8f904d984e06': ('Int8',  'Avid Int8?  10',  ''),
+
+            'b1f07750aad8875d7839ba85999b4d60': ('Int16', 'Avid Int16? 11', ''),
+            'b94a62f973fe6063f3e9dc41bbec46bd': ('Int8',  'Avid Int8?  12',  ''),
+            'bf734ae52b16b9eaf8fd061dea7e46ba': ('Int16', 'Avid Int16? 13', ''),
+
+            '82149f0b14ba0ce0473f46bf562e49b6': ('Int32', 'Avid Int32? 14', ''),
+        }
+
+        self.data.update(avid_items)
+
+    @staticmethod
+    def _convert_single(vtype, value):
+        cvalue = RP210._convert_single(vtype, value)
+
+        if cvalue:
+            return cvalue
+
+        if vtype == '16 bit Unicode String':
+            avid_type = value[:17].encode('hex_codec')
+            avid_value = value[17:]
+
+            if avid_type == '4c0002100100000000060e2b3401040101':
+                # Avid string
+                cvalue = "au16:" + avid_value.decode('utf_16_le').encode('utf_8')[:-1]
+
+            elif avid_type == '4c0007010100000000060e2b3401040101':
+                # Avid Int64 (written in reverse hex order)
+                if len(avid_value) > 5:
+                    raise Exception("Length too long")
+                dur = 0
+                for idx in range(1, 5):
+                    dur = dur << 8 | ord(value[-idx])
+
+                cvalue = "aint64:" + str(dur)
+
+        else:
+            cvalue = "a??: [%s:%s]" % (value[:17].encode('hex_codec'), value[17:])
+
+        return cvalue
 
 
 if __name__ == "__main__":

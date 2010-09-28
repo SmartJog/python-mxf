@@ -5,7 +5,7 @@
 import re
 
 from mxf.common import InterchangeObject
-from mxf.rp210 import RP210
+from mxf.rp210 import RP210Avid as RP210
 
 class S377MException(Exception):
     """ Raised on non SMPTE 377M input. """
