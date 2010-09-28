@@ -3,6 +3,10 @@
 
 """ Helper module with utility classes for MXF parsing. """
 
+from collections import MutableMapping
+from operator import eq as _eq
+from itertools import imap as _imap
+
 class InterchangeObject(object):
     """ Base class for all MXF objects.
 
@@ -117,4 +121,160 @@ class InterchangeObject(object):
 
     def __str__(self):
         return '<InterchangeObject "if you see this, it is a bug">'
+
+
+
+################################################################################
+### OrderedDict
+################################################################################
+
+class OrderedDict(dict, MutableMapping):
+    'Dictionary that remembers insertion order'
+    # An inherited dict maps keys to values.
+    # The inherited dict provides __getitem__, __len__, __contains__, and get.
+    # The remaining methods are order-aware.
+    # Big-O running times for all methods are the same as for regular dictionaries.
+
+    # The internal self.__map dictionary maps keys to links in a doubly linked list.
+    # The circular doubly linked list starts and ends with a sentinel element.
+    # The sentinel element never gets deleted (this simplifies the algorithm).
+    # Each link is stored as a list of length three:  [lprev, lnext, lkey].
+
+    def __init__(self, *args, **kwds):
+        '''Initialize an ordered dictionary.  Signature is the same as for
+        regular dictionaries, but keyword arguments are not recommended
+        because their insertion order is arbitrary.
+
+        '''
+        dict.__init__(self, *args, **kwds)
+
+        if len(args) > 1:
+            raise TypeError('expected at most 1 arguments, got %d' % len(args))
+        try:
+            self.__root
+        except AttributeError:
+            self.__root = root = [None, None, None]     # sentinel node
+            lprev = 0
+            lnext = 1
+            root[lprev] = root[lnext] = root
+            self.__map = {}
+        self.update(*args, **kwds)
+
+    def __setitem__(self, key, value, lprev=0, lnext=1, dict_setitem=dict.__setitem__):
+        'od.__setitem__(i, y) <==> od[i]=y'
+        # Setting a new item creates a new link which goes at the end of the linked
+        # list, and the inherited dictionary is updated with the new key/value pair.
+        if key not in self:
+            root = self.__root
+            last = root[lprev]
+            last[lnext] = root[lprev] = self.__map[key] = [last, root, key]
+        dict_setitem(self, key, value)
+
+    def __delitem__(self, key, lprev=0, lnext=1, dict_delitem=dict.__delitem__):
+        'od.__delitem__(y) <==> del od[y]'
+        # Deleting an existing item uses self.__map to find the link which is
+        # then removed by updating the links in the predecessor and successor nodes.
+        dict_delitem(self, key)
+        link = self.__map.pop(key)
+        link_prev = link[lprev]
+        link_next = link[lnext]
+        link_prev[lnext] = link_next
+        link_next[lprev] = link_prev
+
+    def __iter__(self, lnext=1, lkey=2):
+
+        'od.__iter__() <==> iter(od)'
+        # Traverse the linked list in order.
+        root = self.__root
+        curr = root[lnext]
+        while curr is not root:
+            yield curr[lkey]
+            curr = curr[lnext]
+
+    def __reversed__(self, lprev=0, lkey=2):
+        'od.__reversed__() <==> reversed(od)'
+        # Traverse the linked list in reverse order.
+        root = self.__root
+        curr = root[lprev]
+        while curr is not root:
+            yield curr[lkey]
+            curr = curr[lprev]
+
+    def __reduce__(self):
+        'Return state information for pickling'
+        items = [[k, self[k]] for k in self]
+        tmp = self.__map, self.__root
+        del self.__map, self.__root
+        inst_dict = vars(self).copy()
+        self.__map, self.__root = tmp
+        if inst_dict:
+            return (self.__class__, (items,), inst_dict)
+        return self.__class__, (items,)
+
+    def clear(self):
+        'od.clear() -> None.  Remove all items from od.'
+        try:
+            for node in self.__map.itervalues():
+                del node[:]
+            self.__root[:] = [self.__root, self.__root, None]
+            self.__map.clear()
+        except AttributeError:
+            pass
+        dict.clear(self)
+
+    setdefault = MutableMapping.setdefault
+    update = MutableMapping.update
+    pop = MutableMapping.pop
+    keys = MutableMapping.keys
+    values = MutableMapping.values
+    items = MutableMapping.items
+    iterkeys = MutableMapping.iterkeys
+    itervalues = MutableMapping.itervalues
+    iteritems = MutableMapping.iteritems
+    __ne__ = MutableMapping.__ne__
+
+    def popitem(self, last=True):
+        '''od.popitem() -> (k, v), return and remove a (key, value) pair.
+        Pairs are returned in LIFO order if last is true or FIFO order if false.
+
+        '''
+        if not self:
+            raise KeyError('dictionary is empty')
+        key = next(reversed(self) if last else iter(self))
+        value = self.pop(key)
+        return key, value
+
+    def __repr__(self):
+        'od.__repr__() <==> repr(od)'
+        if not self:
+            return '%s()' % (self.__class__.__name__,)
+        return '%s(%r)' % (self.__class__.__name__, self.items())
+
+    def copy(self):
+        'od.copy() -> a shallow copy of od'
+        return self.__class__(self)
+
+    @classmethod
+    def fromkeys(cls, iterable, value=None):
+        '''OD.fromkeys(S[, v]) -> New ordered dictionary with keys from S
+        and values equal to v (which defaults to None).
+
+        '''
+        dict_inst = cls()
+        for key in iterable:
+            dict_inst[key] = value
+        return dict_inst
+
+    def __eq__(self, other):
+        '''od.__eq__(y) <==> od==y.  Comparison to another OD is order-sensitive
+        while comparison to a regular mapping is order-insensitive.
+
+        '''
+        if isinstance(other, OrderedDict):
+            return len(self)==len(other) and \
+                   all(_imap(_eq, self.iteritems(), other.iteritems()))
+        return dict.__eq__(self, other)
+
+    def __del__(self):
+        self.clear()                # eliminate cyclical references
 
