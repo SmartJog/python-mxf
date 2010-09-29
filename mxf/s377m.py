@@ -22,7 +22,7 @@ class KLVFill(InterchangeObject):
         InterchangeObject.__init__(self, fdesc, debug)
 
     def __str__(self):
-        return "<KLVFill size=%d>" % self.length
+        return "<KLVFill pos=%d size=%d>" % (self.pos, self.length)
 
     def read(self):
         """ KLV Fill data has no value. """
@@ -40,7 +40,7 @@ class KLVDarkComponent(KLVFill):
         KLVFill.__init__(self, fdesc, debug)
 
     def __str__(self):
-        return "<KLVDarkComponent ul=%s size=%d>" % (self.key.encode('hex_codec'), self.length)
+        return "<KLVDarkComponent pos=%d size=%d ul=%s >" % (self.pos, self.length, self.key.encode('hex_codec'))
 
 
 class MXFPartition(InterchangeObject):
@@ -69,7 +69,8 @@ class MXFPartition(InterchangeObject):
             raise S377MException('Not a valid Partition Pack key: %s' % self.key.encode('hex_codec'))
 
     def __str__(self):
-        return '<MXF%(type)sPartition %(openness)s and %(completeness)s>' % {
+        return '<MXF%(type)sPartition pos=%(pos)s %(openness)s and %(completeness)s>' % {
+            'pos': self.pos,
             'type': {'\x02': 'Header', '\x03': 'Body', '\x04': 'Footer'}[self.key[13]],
             'openness': ord(self.key[14]) & 0xfe and 'Closed' or 'Open',
             'completeness': ord(self.key[14]) & 0xfd and 'Complete' or 'Incomplete',
@@ -148,6 +149,7 @@ class MXFPrimer(InterchangeObject):
 
     def __str__(self):
         ret = ['<MXFPrimer']
+        ret += ['pos=%d' % self.pos]
         ret += ['size=%d' % self.length]
         ret += ['localtags=%d' % len(self.data)]
         if self.debug:
@@ -230,6 +232,7 @@ class MXFDataSet(InterchangeObject):
 
     def __str__(self):
         ret = ['<MXF' + (self.dark and 'Dark' or '') + 'DataSet']
+        ret += ['pos=%d' % self.pos]
         ret += ['size=%d' % self.length]
         ret += ['InstanceUID=%s' % self.data['\x3c\x0a'].encode('hex_codec')]
         if self.debug:
@@ -278,6 +281,7 @@ class MXFPreface(MXFDataSet):
     def __str__(self):
         """ Render function. """
         ret = ['<MXFPreface']
+        ret += ['pos=%d' % self.pos]
         ret += ['size=%d' % self.length]
         ret += ['InstanceUID=%s' % self.data['\x3c\x0a'].encode('hex_codec')]
         if self.debug:
@@ -298,7 +302,7 @@ class RandomIndexMetadata(InterchangeObject):
         self.data = {'partition': []}
 
     def __str__ (self):
-        return '<RandomIndexMetadata size=%d entries=%d>' % (self.length, len(self.data['partition']))
+        return '<RandomIndexMetadata pos=%d size=%d entries=%d>' % (self.pos, self.length, len(self.data['partition']))
 
     def read(self):
 

@@ -21,6 +21,7 @@ class InterchangeObject(object):
         self.data = None
 
         self.fdesc = fdesc
+        self.pos = fdesc.tell()
         self.key, self.length, self.bytes_num = \
             InterchangeObject.get_key_length(fdesc, decoded=False)
 
