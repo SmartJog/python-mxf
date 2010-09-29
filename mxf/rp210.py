@@ -49,6 +49,8 @@ class RP210(object):
         except StopIteration:
             csv_file.close()
 
+        self.data.update({'060e2b34010101050e0b01030101010a': ('SMPTE Unkown ???', 'SMPTE Int8', 'Unkown format 1')})
+
     def get_triplet(self, format_ul):
         """ Returns RP210 triplet for given format UL. """
 
