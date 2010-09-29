@@ -211,7 +211,7 @@ class MXFPrimer(InterchangeObject):
         try:
             return self.rp210_convert.convert(self.data[tag], value)
         except RP210Exception:
-            return '[data:%s]' % evalue
+            return evalue
 
 
 class MXFDataSet(InterchangeObject):
@@ -266,6 +266,20 @@ class MXFDataSet(InterchangeObject):
             localdata = data[offset+4:offset+set_size+4]
             self.data['by_tag'].update({localtag: localdata})
             offset += set_size + 4
+
+            cvalue = None
+            key_name = localtag.encode('hex_codec')
+            try:
+                cvalue = self.primer.convert(localtag, localdata)
+                key_name = self.rp210.get_triplet(self.primer.data[localtag])[1]
+            except KeyError, _error:
+                print "Primer Pack is missing an entry for:", localtag.encode('hex_codec')
+
+            except RP210Exception, _error:
+                print "Could not convert to [data:%s] format %s" % (localdata.encode('hex_codec'), self.primer.data[localtag].encode('hex_codec'))
+                cvalue = "[data:%s]" % localdata.encode('hex_codec')
+
+            self.data['by_format_ul'].update({key_name: cvalue})
 
         return
 
