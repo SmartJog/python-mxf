@@ -152,8 +152,6 @@ class MXFParser(object):
                 klv.read()
                 dark += 1
 
-            print klv
-
             header_klvs.append(klv)
             if isinstance(klv, MXFDataSet):
                 if 'GUID' in klv.data['by_format_ul']:
@@ -211,6 +209,117 @@ class MXFParser(object):
         # Avid Object Directory (OP avid ?)
         # Footer Partition Pack
         # Random Index Pack
+
+        ### Printout
+
+        print "KLVs left:", len(header_klvs_hash)
+        print "<=============================================================>"
+
+        print ""
+        print header_metadata_preface
+        header_metadata_preface.human_readable()
+
+        klv = header_klvs_hash[header_metadata_preface.data['by_format_ul']['Content']]
+        print 4 * " ", klv
+        for package in klv.data['by_format_ul']['Packages']:
+            print 8 * " ", header_klvs_hash[package]
+
+            header_klvs_hash[package].human_readable(indent=2)
+
+            if 'Avid Metadata 1' in header_klvs_hash[package].data['by_format_ul']:
+                klv_descs = header_klvs_hash[package].data['by_format_ul']['Avid Metadata 1']
+                if not isinstance(klv_descs, basestring):
+                    for desc in klv_descs:
+                        print 12 * " ", header_klvs_hash[desc]
+
+                        for item in header_klvs_hash[desc].human_readable(header_metadata_primer_pack):
+                            print 16 * " ", item
+
+                        if 'Avid Metadata 2' in header_klvs_hash[desc].data['by_format_ul']:
+                            klv_descs = header_klvs_hash[desc].data['by_format_ul']['Avid Metadata 2']
+                            for meta in klv_descs:
+                                print 16 * " ", header_klvs_hash[meta]
+
+                                for item in header_klvs_hash[meta].human_readable(header_metadata_primer_pack):
+                                    print 20 * " ", item
+
+                                del header_klvs_hash[meta]
+
+                        del header_klvs_hash[desc]
+
+            # Dark MaterialPackage metadata
+            if 'Package categorized comments' in header_klvs_hash[package].data['by_format_ul']:
+                klv_descs = header_klvs_hash[package].data['by_format_ul']['Package categorized comments']
+                for desc in klv_descs:
+                    print 12 * " ", header_klvs_hash[desc]
+
+                    header_klvs_hash[desc].human_readable(indent=5)
+                    del header_klvs_hash[desc]
+
+            if 'Essence Description' in header_klvs_hash[package].data['by_format_ul']:
+                klv_comp = header_klvs_hash[package].data['by_format_ul']['Essence Description']
+                if not klv_comp in header_klvs_hash:
+                    print 12 * " ", "Essence Description points to unknown data"
+                else:
+                    print 12 * " ", header_klvs_hash[klv_comp]
+                    header_klvs_hash[klv_comp].human_readable(indent=4)
+                    del header_klvs_hash[klv_comp]
+
+            if 'Tracks' in header_klvs_hash[package].data['by_format_ul']:
+                klv_tracks = header_klvs_hash[package].data['by_format_ul']['Tracks']
+                for track in klv_tracks:
+                    print 12 * " ", header_klvs_hash[track]
+
+                    header_klvs_hash[track].human_readable()
+
+                    # AKA Sequence in MXFDump
+                    if 'Segment' in header_klvs_hash[track].data['by_format_ul']:
+                        klv_segment = header_klvs_hash[track].data['by_format_ul']['Segment']
+                        print 16 * " ", header_klvs_hash[klv_segment]
+
+                        header_klvs_hash[klv_segment].human_readable(indent=5)
+
+                        # SourceClip
+                        if 'Components in Sequence' in header_klvs_hash[klv_segment].data['by_format_ul']:
+                            klv_clip = header_klvs_hash[klv_segment].data['by_format_ul']['Components in Sequence']
+                            for clip in klv_clip:
+                                if not clip in header_klvs_hash:
+                                    print 20 * " ", "Could not find linked component"
+                                else:
+                                    print 20 * " ", header_klvs_hash[clip]
+                                    header_klvs_hash[clip].human_readable(indent=6)
+                                    del header_klvs_hash[clip]
+
+                        del header_klvs_hash[klv_segment]
+
+                    del header_klvs_hash[track]
+
+            if 'Avid Metadata 2' in header_klvs_hash[package].data['by_format_ul']:
+                klv_descs = header_klvs_hash[package].data['by_format_ul']['Avid Metadata 2']
+                for desc in klv_descs:
+                    print 12 * " ", header_klvs_hash[desc]
+                    del header_klvs_hash[desc]
+
+            del header_klvs_hash[package]
+
+        del header_klvs_hash[header_metadata_preface.data['by_format_ul']['Content']]
+
+        klv = header_klvs_hash[header_metadata_preface.data['by_format_ul']['Identification List'][0]]
+        print 4 * " ", klv
+        klv.human_readable(indent=2)
+
+        del header_klvs_hash[klv.data['by_format_ul']['GUID']]
+
+        print ""
+        print "KLVs left:", len(header_klvs_hash)
+        print "<=============================================================>"
+        header_partition_pack.human_readable()
+
+        # Below are some dark metadata
+        print "<=============================================================>"
+        for _, klv in header_klvs_hash.items():
+            print klv
+            klv.human_readable(indent=1)
 
         return {
             'header': {
