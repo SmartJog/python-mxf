@@ -5,6 +5,7 @@ mxf_PYTHON = \
 	common.py \
 	parser.py \
 	rp210.py \
+	rp210types.py \
 	s377m.py
 
 CLEANFILES = $(mxf_PYTHON:.py=.pyc)

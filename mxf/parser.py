@@ -155,7 +155,7 @@ class MXFParser(object):
             header_klvs.append(klv)
             if isinstance(klv, MXFDataSet):
                 if 'GUID' in klv.data['by_format_ul']:
-                    header_klvs_hash[klv.data['by_format_ul']['GUID']] = klv
+                    header_klvs_hash[klv.data['by_format_ul']['GUID'].read()] = klv
 
         ### End of the parsing loop 1
 
@@ -219,7 +219,7 @@ class MXFParser(object):
         print header_metadata_preface
         header_metadata_preface.human_readable()
 
-        klv = header_klvs_hash[header_metadata_preface.data['by_format_ul']['Content']]
+        klv = header_klvs_hash[header_metadata_preface.data['by_format_ul']['Content'].read()]
         print 4 * " ", klv
         for package in klv.data['by_format_ul']['Packages']:
             print 8 * " ", header_klvs_hash[package]
@@ -302,13 +302,13 @@ class MXFParser(object):
 
             del header_klvs_hash[package]
 
-        del header_klvs_hash[header_metadata_preface.data['by_format_ul']['Content']]
+        del header_klvs_hash[header_metadata_preface.data['by_format_ul']['Content'].read()]
 
-        klv = header_klvs_hash[header_metadata_preface.data['by_format_ul']['Identification List'][0]]
+        klv = header_klvs_hash[header_metadata_preface.data['by_format_ul']['Identification List'].read()[0].read()]
         print 4 * " ", klv
         klv.human_readable(indent=2)
 
-        del header_klvs_hash[klv.data['by_format_ul']['GUID']]
+        del header_klvs_hash[klv.data['by_format_ul']['GUID'].read()]
 
         print ""
         print "KLVs left:", len(header_klvs_hash)
