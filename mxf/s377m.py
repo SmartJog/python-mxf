@@ -242,7 +242,7 @@ class MXFDataSet(InterchangeObject):
         ret = ['<MXF' + (self.dark and 'Dark' or '') + 'DataSet']
         ret += ['pos=%d' % self.pos]
         ret += ['size=%d' % self.length]
-        ret += ['InstanceUID=%s' % self.data['by_tag']['\x3c\x0a'].encode('hex_codec')]
+        ret += ['InstanceUID=%s' % self.i_guid]
         if self.debug:
             ret += ['tags=%d:\n' % len(self.data) \
                 + '\n'.join(["%s: %s %d bytes" % (
@@ -251,6 +251,14 @@ class MXFDataSet(InterchangeObject):
                     len(j)
                 ) for i, j in self.data['by_tag'].items()])]
         return ' '.join(ret) + '>'
+
+    def __getattribute__(self, attr):
+        if attr.startswith('i_'):
+            data = object.__getattribute__(self, 'data')
+            if data and 'by_format_ul' in data and attr[2:] in data['by_format_ul']:
+                return data['by_format_ul'][attr[2:]]
+
+        return object.__getattribute__(self, attr)
 
     def read(self):
         """ Generic read method for sets and packs. """
@@ -307,7 +315,7 @@ class MXFPreface(MXFDataSet):
         ret = ['<MXFPreface']
         ret += ['pos=%d' % self.pos]
         ret += ['size=%d' % self.length]
-        ret += ['InstanceUID=%s' % self.data['by_tag']['\x3c\x0a'].encode('hex_codec')]
+        ret += ['InstanceUID=%s' % self.i_guid]
         if self.debug:
             ret += ['tags=%d:\n' % len(self.data) \
                 + '\n'.join(["%s: %s %d bytes" % (
