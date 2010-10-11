@@ -122,6 +122,38 @@ class InterchangeObject(object):
     def __str__(self):
         return '<InterchangeObject "if you see this, it is a bug">'
 
+################################################################################
+### Singleton
+################################################################################
+
+class Singleton(object):
+
+    _instance = None
+
+    def __init__(self, cls):
+        # Check whether we already have an instance
+        if Singleton._instance is None:
+            # Create and remember instance
+            Singleton._instance = cls()
+
+    def __getattr__(self, attribute):
+        """ Delegate access to implementation.
+
+        @param self The object pointer.
+        @param attr Attribute wanted.
+        @return Attribute
+        """
+        return getattr(self._instance, attribute)
+
+    def __setattr__(self, attribute, value):
+        """ Delegate access to implementation.
+
+        @param self The object pointer.
+        @param attr Attribute wanted.
+        @param value Vaule to be set.
+        @return Result of operation.
+        """
+        return setattr(self._instance, attribute, value)
 
 
 ################################################################################
