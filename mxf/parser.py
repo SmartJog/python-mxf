@@ -5,7 +5,7 @@
 
 from mxf.common import InterchangeObject
 from mxf.s377m import MXFPartition, MXFDataSet, MXFPreface, MXFPrimer, KLVFill, KLVDarkComponent, RandomIndexMetadata
-from mxf.avid import AvidObjectDirectory
+from mxf.avid import AvidObjectDirectory, AvidMetadataPreface
 
 SMPTE_PARTITION_PACK_LABEL = '060e2b34020501010d010201'
 
@@ -43,6 +43,7 @@ class MXFParser(object):
         header_end = self.fd.tell() + InterchangeObject.ber_decode_length(header_partition_pack.data['header_byte_count'], len(header_partition_pack.data['header_byte_count']))
 
         header_metadata_preface = None
+        avid_metadata_preface = None
         dark = 0
 
         while self.fd.tell() <= header_end:
@@ -76,8 +77,9 @@ class MXFParser(object):
 
             elif key == '8053080036210804b3b398a51c9011d4':
                 # Avid ???
-                klv = MXFDataSet(fd, header_metadata_primer_pack, debug=False, dark=True)
-                klv.read()
+                avid_metadata_preface = AvidMetadataPreface(fd, header_metadata_primer_pack)
+                avid_metadata_preface.read()
+                continue
 
             elif key in (
              # 416 chunk (dark)
