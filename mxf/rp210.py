@@ -49,7 +49,28 @@ class RP210(object):
         except StopIteration:
             csv_file.close()
 
-        self.data.update({'060e2b34010101050e0b01030101010a': ('SMPTE Unkown ???', 'SMPTE Int8', 'Unkown format 1')})
+        extra_items = {
+            # Hacks from short tags supposed to be present in Primer Pack for
+            # AAF compatibility but missing in OPavid
+            '00000000000000000000000000000001': ('StrongReference', 'AAF Metadata', 'Avid AAF Metadata Reference'),
+            '00000000000000000000000000000002': ('StrongReference', 'Preface', 'Avid Preface Reference'),
+            '00000000000000000000000000000003': ('StrongReferenceArray', 'Avid StrongReferenceArray to Composited Types', ''),
+            '00000000000000000000000000000004': ('StrongReferenceArray', 'Avid StrongReferenceArray to Simple Types', ''),
+
+            '00000000000000000000000000000010': ('Boolean', 'Signedness', ''),
+            '0000000000000000000000000000000f': ('UInt8',   'Length in bytes', ''),
+
+            '0000000000000000000000000000001b': ('Reference', 'Unkown data 1', ''),
+
+
+            # Looks like regular SMPTE label but not present in RP210v10
+            '060e2b34010101050e0b01030101010a': ('UInt16', 'SMPTE UInt16', 'Unkown format 1'),
+        }
+
+        for key, items in extra_items.iteritems():
+            extra_items[key] = (items[0], self._flat_style(items[1]), items[2])
+
+        self.data.update(extra_items)
 
     @staticmethod
     def _flat_style(vtype):
