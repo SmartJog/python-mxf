@@ -5,7 +5,7 @@
 import re
 
 from mxf.common import InterchangeObject
-from mxf.rp210 import RP210Avid as RP210
+from mxf.rp210 import RP210Avid as RP210, RP210Exception
 
 class S377MException(Exception):
     """ Raised on non SMPTE 377M input. """
@@ -208,7 +208,10 @@ class MXFPrimer(InterchangeObject):
             return "Error: '%s' does not map to a SMPTE format UL '%s'" % (etag, self.data[tag].encode('hex_codec'))
 
         # SMTPE RP 210 conversion
-        return self.rp210_convert.convert(self.data[tag], value)
+        try:
+            return self.rp210_convert.convert(self.data[tag], value)
+        except RP210Exception:
+            return '[data:%s]' % evalue
 
 
 class MXFDataSet(InterchangeObject):

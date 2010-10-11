@@ -8,6 +8,14 @@ import csv
 import re
 from pprint import pprint, pformat
 
+class RP210Exception(Exception):
+    """ Raised on RP210 operation problem. """
+
+    def __init__(self, error):
+        """ Init Method """
+        Exception.__init__(self, 'RP210: ' + error)
+
+
 class RP210(object):
     """ SMTPE RP210 helper class.
 
@@ -181,7 +189,7 @@ class RP210(object):
             return "%s (%s): %s" % (vname, vtype, edata)
 
         else:
-            return self._convert_single(vtype, value)
+            raise RP210Exception("No converter for %s, %s" % (vtype, vname))
 
         return "Cannot convert type %s: %s" % (eul, edata)
 
