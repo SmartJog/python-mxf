@@ -49,6 +49,15 @@ class RP210(object):
         except StopIteration:
             csv_file.close()
 
+    def get_triplet(self, format_ul):
+        """ Returns RP210 triplet for given format UL. """
+
+        eul = format_ul.encode('hex_codec')
+        if eul not in self.data.keys():
+            raise RP210Exception("UL '%s' not found in %s." % (eul, self.__class__))
+
+        return self.data[eul]
+
     @staticmethod
     def _convert_single(vtype, value):
         """ Convert non-Array types. """
