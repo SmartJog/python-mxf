@@ -179,6 +179,26 @@ class MXFPrimer(InterchangeObject):
         etag = tag.encode('hex_codec')
         evalue = value.encode('hex_codec')
 
+        # FIXME: this is a big HACK
+        if etag == "0001":
+            self.data[tag] = ('060e2b34' + etag).decode('hex_codec')
+            self.rp210_convert.data['060e2b34' + etag] = ('StrongReference', 'Avid Dark Metadata Start Reference', '')
+
+        # FIXME: this is a big HACK
+        if etag == "0002":
+            self.data[tag] = ('060e2b34' + etag).decode('hex_codec')
+            self.rp210_convert.data['060e2b34' + etag] = ('StrongReference', 'Avid Preface Reference', '')
+
+        # FIXME: this is a big HACK
+        if etag == "0003":
+            self.data[tag] = ('060e2b34' + etag).decode('hex_codec')
+            self.rp210_convert.data['060e2b34' + etag] = ('StrongReferenceArray', 'Avid StrongReferenceArray to Composited Types', '')
+
+        # FIXME: this is a big HACK
+        if etag == "0004":
+            self.data[tag] = ('060e2b34' + etag).decode('hex_codec')
+            self.rp210_convert.data['060e2b34' + etag] = ('StrongReferenceArray', 'Avid StrongReferenceArray to Simple Types', '')
+
         if tag not in self.data.keys():
             return "Error: Local key '%s' not found in primer (%s)" % (etag, evalue)
 
