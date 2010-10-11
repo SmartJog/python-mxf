@@ -1,1 +1,1 @@
-SUBDIRS = mxf tests
+SUBDIRS = mxf data tests

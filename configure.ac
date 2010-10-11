@@ -10,6 +10,7 @@ AC_PROG_SED
 AC_CONFIG_FILES([
     Makefile
     mxf/Makefile
+    data/Makefile
     tests/Makefile
 ])
 
