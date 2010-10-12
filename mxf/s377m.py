@@ -6,6 +6,7 @@ import re
 
 from mxf.common import InterchangeObject, OrderedDict, Singleton
 from mxf.rp210 import RP210Avid as RP210, RP210Exception
+from mxf.rp210types import Array, Reference
 
 class S377MException(Exception):
     """ Raised on non SMPTE 377M input. """
@@ -282,8 +283,29 @@ class MXFDataSet(InterchangeObject):
 
         print "%s%s" % (4 * indent * ' ', self)
 
-        for i, j in self.data['by_tag'].items():
-            print "%s%s" % (4 * indent * ' ' + '  ', self.primer.convert(i, j))
+        for i, j in self.data['by_format_ul'].items():
+
+            if i == 'guid':
+                continue
+
+            elif isinstance(j, Reference):
+                if j.read() not in klv_hash:
+                    print "%s%s: broken reference, %s" % (4 * indent * ' ' + '  ', i, j)
+                else:
+                    klv_hash = klv_hash.pop(j.read()).human_readable(klv_hash, indent+1)
+
+            elif isinstance(j, Array):
+                for k in j.read():
+                    if isinstance(j.read()[0], Reference):
+                        if k.read() not in klv_hash:
+                            print "%s%s: broken reference, %s" % (4 * indent * ' ' + '  ', i, k)
+                        else:
+                            print ""
+                            klv_hash.pop(k.read()).human_readable(klv_hash, indent+1)
+                    else:
+                        print "%s%s: %s %s" % (4 * indent * ' ' + '  ', i, k, type(k))
+            else:
+                print "%s%s: %s %s" % (4 * indent * ' ' + '  ', i, j, type(j))
 
         return klv_hash
 
