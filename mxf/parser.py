@@ -154,8 +154,8 @@ class MXFParser(object):
 
             header_klvs.append(klv)
             if isinstance(klv, MXFDataSet):
-                if 'GUID' in klv.data['by_format_ul']:
-                    header_klvs_hash[klv.data['by_format_ul']['GUID'].read()] = klv
+                if 'guid' in klv.data['by_format_ul']:
+                    header_klvs_hash[klv.data['by_format_ul']['guid'].read()] = klv
 
         ### End of the parsing loop 1
 
@@ -219,15 +219,15 @@ class MXFParser(object):
         print header_metadata_preface
         header_metadata_preface.human_readable()
 
-        klv = header_klvs_hash[header_metadata_preface.data['by_format_ul']['Content'].read()]
+        klv = header_klvs_hash[header_metadata_preface.data['by_format_ul']['content'].read()]
         print 4 * " ", klv
-        for package in klv.data['by_format_ul']['Packages']:
+        for package in klv.data['by_format_ul']['packages']:
             print 8 * " ", header_klvs_hash[package]
 
             header_klvs_hash[package].human_readable(indent=2)
 
-            if 'Avid Metadata 1' in header_klvs_hash[package].data['by_format_ul']:
-                klv_descs = header_klvs_hash[package].data['by_format_ul']['Avid Metadata 1']
+            if 'avid_metadata_1' in header_klvs_hash[package].data['by_format_ul']:
+                klv_descs = header_klvs_hash[package].data['by_format_ul']['avid_metadata_1']
                 if not isinstance(klv_descs, basestring):
                     for desc in klv_descs:
                         print 12 * " ", header_klvs_hash[desc]
@@ -235,8 +235,8 @@ class MXFParser(object):
                         for item in header_klvs_hash[desc].human_readable(header_metadata_primer_pack):
                             print 16 * " ", item
 
-                        if 'Avid Metadata 2' in header_klvs_hash[desc].data['by_format_ul']:
-                            klv_descs = header_klvs_hash[desc].data['by_format_ul']['Avid Metadata 2']
+                        if 'avid_metadata_2' in header_klvs_hash[desc].data['by_format_ul']:
+                            klv_descs = header_klvs_hash[desc].data['by_format_ul']['avid_metadata_2']
                             for meta in klv_descs:
                                 print 16 * " ", header_klvs_hash[meta]
 
@@ -248,16 +248,16 @@ class MXFParser(object):
                         del header_klvs_hash[desc]
 
             # Dark MaterialPackage metadata
-            if 'Package categorized comments' in header_klvs_hash[package].data['by_format_ul']:
-                klv_descs = header_klvs_hash[package].data['by_format_ul']['Package categorized comments']
+            if 'package_categorized_comments' in header_klvs_hash[package].data['by_format_ul']:
+                klv_descs = header_klvs_hash[package].data['by_format_ul']['package_categorized_comments']
                 for desc in klv_descs:
                     print 12 * " ", header_klvs_hash[desc]
 
                     header_klvs_hash[desc].human_readable(indent=5)
                     del header_klvs_hash[desc]
 
-            if 'Essence Description' in header_klvs_hash[package].data['by_format_ul']:
-                klv_comp = header_klvs_hash[package].data['by_format_ul']['Essence Description']
+            if 'essence_description' in header_klvs_hash[package].data['by_format_ul']:
+                klv_comp = header_klvs_hash[package].data['by_format_ul']['essence_description']
                 if not klv_comp in header_klvs_hash:
                     print 12 * " ", "Essence Description points to unknown data"
                 else:
@@ -265,23 +265,23 @@ class MXFParser(object):
                     header_klvs_hash[klv_comp].human_readable(indent=4)
                     del header_klvs_hash[klv_comp]
 
-            if 'Tracks' in header_klvs_hash[package].data['by_format_ul']:
-                klv_tracks = header_klvs_hash[package].data['by_format_ul']['Tracks']
+            if 'tracks' in header_klvs_hash[package].data['by_format_ul']:
+                klv_tracks = header_klvs_hash[package].data['by_format_ul']['tracks']
                 for track in klv_tracks:
                     print 12 * " ", header_klvs_hash[track]
 
                     header_klvs_hash[track].human_readable()
 
                     # AKA Sequence in MXFDump
-                    if 'Segment' in header_klvs_hash[track].data['by_format_ul']:
-                        klv_segment = header_klvs_hash[track].data['by_format_ul']['Segment']
+                    if 'segment' in header_klvs_hash[track].data['by_format_ul']:
+                        klv_segment = header_klvs_hash[track].data['by_format_ul']['segment']
                         print 16 * " ", header_klvs_hash[klv_segment]
 
                         header_klvs_hash[klv_segment].human_readable(indent=5)
 
                         # SourceClip
-                        if 'Components in Sequence' in header_klvs_hash[klv_segment].data['by_format_ul']:
-                            klv_clip = header_klvs_hash[klv_segment].data['by_format_ul']['Components in Sequence']
+                        if 'components_in_sequence' in header_klvs_hash[klv_segment].data['by_format_ul']:
+                            klv_clip = header_klvs_hash[klv_segment].data['by_format_ul']['components_in_sequence']
                             for clip in klv_clip:
                                 if not clip in header_klvs_hash:
                                     print 20 * " ", "Could not find linked component"
@@ -294,21 +294,21 @@ class MXFParser(object):
 
                     del header_klvs_hash[track]
 
-            if 'Avid Metadata 2' in header_klvs_hash[package].data['by_format_ul']:
-                klv_descs = header_klvs_hash[package].data['by_format_ul']['Avid Metadata 2']
+            if 'avid_metadata_2' in header_klvs_hash[package].data['by_format_ul']:
+                klv_descs = header_klvs_hash[package].data['by_format_ul']['avid_metadata_2']
                 for desc in klv_descs:
                     print 12 * " ", header_klvs_hash[desc]
                     del header_klvs_hash[desc]
 
             del header_klvs_hash[package]
 
-        del header_klvs_hash[header_metadata_preface.data['by_format_ul']['Content'].read()]
+        del header_klvs_hash[header_metadata_preface.data['by_format_ul']['content'].read()]
 
-        klv = header_klvs_hash[header_metadata_preface.data['by_format_ul']['Identification List'].read()[0].read()]
+        klv = header_klvs_hash[header_metadata_preface.data['by_format_ul']['identification_list'].read()[0].read()]
         print 4 * " ", klv
         klv.human_readable(indent=2)
 
-        del header_klvs_hash[klv.data['by_format_ul']['GUID'].read()]
+        del header_klvs_hash[klv.data['by_format_ul']['guid'].read()]
 
         print ""
         print "KLVs left:", len(header_klvs_hash)

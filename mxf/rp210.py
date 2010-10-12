@@ -35,7 +35,7 @@ class RP210(object):
                     eul = row['Formatted as UL'].replace('.', '').lower()
                     self.data[eul] = (
                         row['Type'],
-                        row['Data Element Name'],
+                        self._flat_style(row['Data Element Name']),
                         row['Data Element Definition']
                     )
                 except KeyError:
@@ -50,6 +50,17 @@ class RP210(object):
             csv_file.close()
 
         self.data.update({'060e2b34010101050e0b01030101010a': ('SMPTE Unkown ???', 'SMPTE Int8', 'Unkown format 1')})
+
+    @staticmethod
+    def _flat_style(vtype):
+        """ Convert random type string to a PEP compatible class attribute name.
+
+        @param vtype: RP210 type string (from SMTPE spreadsheet)
+        @return: PEP compatible class attribute string
+        """
+
+        ret = vtype.lstrip().capitalize().replace(' ', '_')
+        return ret.lower()
 
     def get_triplet(self, format_ul):
         """ Returns RP210 triplet for given format UL. """
@@ -120,6 +131,9 @@ class RP210Avid(RP210):
 
             '82149f0b14ba0ce0473f46bf562e49b6': ('Int32', 'Avid Int32? 14', ''),
         }
+
+        for key, items in avid_items.iteritems():
+            avid_items[key] = (items[0], self._flat_style(items[1]), items[2])
 
         self.data.update(avid_items)
 
