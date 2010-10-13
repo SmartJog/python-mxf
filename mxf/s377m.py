@@ -202,6 +202,33 @@ class MXFPrimer(InterchangeObject):
 class MXFDataSet(InterchangeObject):
     """ MXF parsing class specialized for loading Sets and Packs. """
 
+    dataset_names = {
+         # SMPTE 377M: Strutural Metadata Sets
+         '060e2b34025301010d01010101010900': 'Filler',
+         '060e2b34025301010d01010101010f00': 'Sequence',
+
+         '060e2b34025301010d01010101011100': 'SourceClip',
+         '060e2b34025301010d01010101011400': 'TimecodeComponent',
+
+         '060e2b34025301010d01010101012300': 'EssenceContainerData',
+         '060e2b34025301010d01010101012800': 'CDCIEssenceDescriptor',
+
+         '060e2b34025301010d01010101011800': 'ContentStorage',
+
+         '060e2b34025301010d01010101012e00': 'EssenceDescription',
+         '060e2b34025301010d01010101013000': 'Identification',
+
+         '060e2b34025301010d01010101013600': 'MaterialPackage',
+         '060e2b34025301010d01010101013700': 'SourcePackage',
+
+         '060e2b34025301010d01010101013b00': 'TimelineTrack',
+         '060e2b34025301010d01010101013f00': 'AVID DARK 2',
+
+         '060e2b34025301010d01010101014200': 'GenericSoundEssenceDescriptor',
+         '060e2b34025301010d01010101014400': 'MultipleDescriptor',
+         '060e2b34025301010d01010101014800': 'WaveAudioDescriptor',
+    }
+
     def __init__(self, fdesc, primer, debug=False, dark=False):
         InterchangeObject.__init__(self, fdesc, debug)
         self.primer = primer
@@ -210,6 +237,14 @@ class MXFDataSet(InterchangeObject):
             'by_tag': OrderedDict(),
             'by_format_ul': OrderedDict(),
         }
+        self.set_type = 'DataSet'
+
+        if self.key.encode('hex_codec') not in MXFDataSet.dataset_names.keys():
+            #print "MXFDataSet is dark", self.key.encode('hex_codec')
+            self.dark = True
+            self.set_type = 'Dark' + self.set_type
+        else:
+            self.set_type = MXFDataSet.dataset_names[self.key.encode('hex_codec')]
 
         if not self.dark:
             if not self.key.encode('hex_codec').startswith('060e2b34'):
@@ -224,7 +259,7 @@ class MXFDataSet(InterchangeObject):
         self.rp210 = Singleton(RP210)
 
     def __str__(self):
-        ret = ['<MXF' + (self.dark and 'Dark' or '') + 'DataSet']
+        ret = ['<MXF' + self.set_type]
         ret += ['pos=%d' % self.pos]
         ret += ['size=%d' % self.length]
         ret += ['InstanceUID=%s' % self.i_guid]
