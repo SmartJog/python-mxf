@@ -204,8 +204,8 @@ class MXFPrimer(InterchangeObject):
         if tag not in self.data.keys():
             return "Error: Local key '%s' not found in primer (%s)" % (etag, evalue)
 
-        if not self.data[tag].startswith('060e2b34'.decode('hex_codec')):
-            return "Error: '%s' does not map to a SMPTE format UL '%s'" % (etag, self.data[tag].encode('hex_codec'))
+        #if not self.data[tag].startswith('060e2b34'.decode('hex_codec')):
+        #    return "Error: '%s' does not map to a SMPTE format UL '%s'" % (etag, self.data[tag].encode('hex_codec'))
 
         # SMTPE RP 210 conversion
         try:
