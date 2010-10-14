@@ -4,7 +4,7 @@
 
 import re
 
-from mxf.common import InterchangeObject
+from mxf.common import InterchangeObject, OrderedDict, Singleton
 from mxf.rp210 import RP210Avid as RP210, RP210Exception
 
 class S377MException(Exception):
@@ -221,7 +221,10 @@ class MXFDataSet(InterchangeObject):
         InterchangeObject.__init__(self, fdesc, debug)
         self.primer = primer
         self.dark = dark
-        self.data = {}
+        self.data = {
+            'by_tag': OrderedDict(),
+            'by_format_ul': OrderedDict(),
+        }
 
         if not self.dark:
             if not self.key.encode('hex_codec').startswith('060e2b34'):
@@ -233,18 +236,20 @@ class MXFDataSet(InterchangeObject):
             if self.key[5] != '\x53':
                 raise S377MException('Non-Local set syntax not supported yet (0x%x)' % ord(self.key[5]))
 
+        self.rp210 = Singleton(RP210)
+
     def __str__(self):
         ret = ['<MXF' + (self.dark and 'Dark' or '') + 'DataSet']
         ret += ['pos=%d' % self.pos]
         ret += ['size=%d' % self.length]
-        ret += ['InstanceUID=%s' % self.data['\x3c\x0a'].encode('hex_codec')]
+        ret += ['InstanceUID=%s' % self.data['by_tag']['\x3c\x0a'].encode('hex_codec')]
         if self.debug:
             ret += ['tags=%d:\n' % len(self.data) \
                 + '\n'.join(["%s: %s %d bytes" % (
                     i.encode('hex_codec'),
                     j.encode('hex_codec').ljust(64, ' ')[:64],
                     len(j)
-                ) for i, j in self.data.items()])]
+                ) for i, j in self.data['by_tag'].items()])]
         return ' '.join(ret) + '>'
 
     def read(self):
@@ -257,7 +262,9 @@ class MXFDataSet(InterchangeObject):
         offset = idx
         while offset < idx + self.length:
             set_size = self.ber_decode_length(data[offset+2:offset+4], 2)
-            self.data.update({data[offset:offset+2]: data[offset+4:offset+set_size+4]})
+            localtag = data[offset:offset+2]
+            localdata = data[offset+4:offset+set_size+4]
+            self.data['by_tag'].update({localtag: localdata})
             offset += set_size + 4
 
         return
@@ -269,7 +276,7 @@ class MXFDataSet(InterchangeObject):
 
         print "%s%s" % (4 * indent * ' ', self)
 
-        for i, j in self.data.items():
+        for i, j in self.data['by_tag'].items():
             print "%s%s" % (4 * indent * ' ' + '  ', self.primer.convert(i, j))
 
         return klv_hash
@@ -286,7 +293,7 @@ class MXFPreface(MXFDataSet):
         ret = ['<MXFPreface']
         ret += ['pos=%d' % self.pos]
         ret += ['size=%d' % self.length]
-        ret += ['InstanceUID=%s' % self.data['\x3c\x0a'].encode('hex_codec')]
+        ret += ['InstanceUID=%s' % self.data['by_tag']['\x3c\x0a'].encode('hex_codec')]
         if self.debug:
             ret += ['tags=%d:\n' % len(self.data) \
                 + '\n'.join(["%s: %s %d bytes" % (
