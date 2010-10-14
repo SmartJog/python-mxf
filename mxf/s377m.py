@@ -350,21 +350,7 @@ class MXFPreface(MXFDataSet):
 
     def __init__(self, fdesc, debug=False):
         MXFDataSet.__init__(self, fdesc, debug)
-
-    def __str__(self):
-        """ Render function. """
-        ret = ['<MXFPreface']
-        ret += ['pos=%d' % self.pos]
-        ret += ['size=%d' % self.length]
-        ret += ['InstanceUID=%s' % self.i_guid]
-        if self.debug:
-            ret += ['tags=%d:\n' % len(self.data) \
-                + '\n'.join(["%s: %s %d bytes" % (
-                    i.encode('hex_codec'),
-                    j.encode('hex_codec').ljust(64, ' '),
-                    len(j)
-                ) for i, j in self.data.items()])]
-        return ' '.join(ret) + '>'
+        self.set_type = 'Preface'
 
 
 class RandomIndexMetadata(InterchangeObject):
