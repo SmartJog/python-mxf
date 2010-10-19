@@ -12,6 +12,16 @@ from mxf.common import InterchangeObject
 class InterchangeObjectTest(unittest.TestCase):
     """ Test BER encoding routine complies to SMTPE 377M. """
 
+    def test_runtime_short_encode(self):
+        """ Test encoding returns an even sized string for short values. """
+        for i in range(0, 127):
+            self.assertEqual(len(InterchangeObject.ber_encode_length(i, prefix=False)) % 2, 0)
+
+    def test_runtime_long_encode(self):
+        """ Test encoding returns an even sized string for longer values. """
+        for i in range(128, 4096):
+            self.assertEqual(len(InterchangeObject.ber_encode_length(i)) % 2, 0)
+
     def test_ber_short_decoding(self):
         """ Test short BER decoding compliance. """
         self.assertEqual(InterchangeObject.ber_decode_length('00'.decode('hex_codec')), 0)
