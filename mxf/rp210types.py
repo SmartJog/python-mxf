@@ -200,6 +200,13 @@ class Version(Converter):
 
         return ret
 
+    def write(self):
+        ret = []
+        for index, itype in enumerate(self._compound[self.type]):
+            ret.append(Integer(self.value[index], itype[1]).write())
+
+        return ''.join(ret)
+
 
 class TimeStamp(Converter):
     """ RP210 TimeStamp converter. """
@@ -236,6 +243,25 @@ class TimeStamp(Converter):
 
         return datetime(ret[0], ret[1], ret[2], ret[3], ret[4], ret[5], ret[6])
 
+    def write(self):
+        ret = []
+        if self.value:
+            for item, itype in self._compound:
+                if item == 'microsecond':
+                    value = getattr(self.value, item)
+                    if value > 0:
+                        # python microseconds = range(10000000)
+                        # mxf only supports 128 values as value / 4
+                        value = value / (100 * 4) / 1000000
+                else:
+                    value = getattr(self.value, item)
+                ret.append(Integer(value, itype).write())
+        else:
+            for _item, itype in self._compound:
+                ret.append(Integer(0, itype).write())
+
+        return ''.join(ret)
+
 
 class Integer(Converter):
     """ RP210 Integer converter. """
@@ -253,6 +279,9 @@ class Integer(Converter):
 
     def read(self):
         return InterchangeObject.ber_decode_length(self.value, self.length)
+
+    def write(self):
+        return InterchangeObject.ber_encode_length(self.value, self.length, prefix=False).decode('hex_codec')
 
 
 class Length(Integer):
@@ -277,6 +306,9 @@ class Rational(Converter):
         den = Integer(self.value[4:8], 'UInt32').read()
         return (num, den)
 
+    def write(self):
+        return Integer(self.value[0], 'UInt32').write() + Integer(self.value[1], 'UInt32').write()
+
 
 class Boolean(Converter):
     """ RP210 Boolean converter. """
@@ -288,6 +320,9 @@ class Boolean(Converter):
 
     def read(self):
         return ord(self.value) != 0
+
+    def write(self):
+        return self.value and '\1' or '\0'
 
 
 class String(Converter):
@@ -329,5 +364,8 @@ class String(Converter):
                 cvalue = "a??: [%s:%s]" % (avid_type, avid_value)
 
             return cvalue
+
+    def write(self):
+        return self.value.encode('utf_16_be')
 
 
