@@ -4,8 +4,8 @@
 
 import re
 
-from mxf.common import InterchangeObject, OrderedDict, Singleton
-from mxf.rp210 import RP210Avid as RP210, RP210Exception
+from mxf.common import InterchangeObject, OrderedDict
+from mxf.rp210 import RP210Exception, RP210
 from mxf.rp210types import Array, Reference, Integer
 
 class S377MException(Exception):
@@ -133,10 +133,14 @@ class MXFPartition(InterchangeObject):
 class MXFPrimer(InterchangeObject):
     """ MXF Primer Pack parser. """
 
-    def __init__(self, fdesc, debug=False):
+    def __init__(self, fdesc, rp210=None, debug=False):
         InterchangeObject.__init__(self, fdesc, debug)
         self.data = {}
-        self.rp210_convert = RP210()
+
+        if rp210:
+            self.rp210 = rp210
+        else:
+            self.rp210 = RP210()
 
         if self.key and not re.search('060e2b34020501..0d01020101050100', self.key.encode('hex_codec')):
             raise S377MException('Not a valid Primer Pack key: %s' % self.key.encode('hex_codec'))
@@ -176,7 +180,9 @@ class MXFPrimer(InterchangeObject):
 
         return
 
-    def convert(self, tag, value):
+    def decode_from_local_tag(self, tag, value):
+        """ Decode data according to local tag mapping to format Universal Labels. """
+
         etag = tag.encode('hex_codec')
         evalue = value.encode('hex_codec')
 
@@ -186,11 +192,12 @@ class MXFPrimer(InterchangeObject):
         #if not self.data[tag].startswith('060e2b34'.decode('hex_codec')):
         #    return "Error: '%s' does not map to a SMPTE format UL '%s'" % (etag, self.data[tag].encode('hex_codec'))
 
+        key = self.rp210.get_triplet_from_format_ul(self.data[tag])[1]
         # SMTPE RP 210 conversion
         try:
-            return self.rp210_convert.convert(self.data[tag], value)
+            return key, self.rp210.convert(self.data[tag], value)
         except RP210Exception:
-            return evalue
+            return key, evalue
 
 
 class MXFDataSet(InterchangeObject):
@@ -250,8 +257,6 @@ class MXFDataSet(InterchangeObject):
             if self.key[5] != '\x53':
                 raise S377MException('Non-Local set syntax not supported yet (0x%x)' % ord(self.key[5]))
 
-        self.rp210 = Singleton(RP210)
-
     def __str__(self):
         ret = ['<MXF' + self.set_type]
         ret += ['pos=%d' % self.pos]
@@ -292,8 +297,7 @@ class MXFDataSet(InterchangeObject):
             cvalue = None
             key_name = localtag.encode('hex_codec')
             try:
-                cvalue = self.primer.convert(localtag, localdata)
-                key_name = self.rp210.get_triplet_from_format_ul(self.primer.data[localtag])[1]
+                key_name, cvalue = self.primer.decode_from_local_tag(localtag, localdata)
             except KeyError, _error:
                 print "Primer Pack is missing an entry for:", localtag.encode('hex_codec')
 

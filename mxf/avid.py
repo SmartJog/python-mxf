@@ -2,9 +2,8 @@
 
 """ Implements basic classes to parse Avid specific MXF objects. """
 
-from mxf.common import InterchangeObject, OrderedDict, Singleton
+from mxf.common import InterchangeObject, OrderedDict
 from mxf.s377m import MXFDataSet
-from mxf.rp210 import RP210Avid as RP210
 
 class AvidObjectDirectory(InterchangeObject):
     """ Avid ObjectDirectory parser. """
@@ -56,7 +55,6 @@ class AvidMetadataPreface(MXFDataSet):
             'by_tag': OrderedDict(),
             'by_format_ul': OrderedDict(),
         }
-        self.rp210 = Singleton(RP210())
 
     def __str__(self):
         ret = ['<AvidMetadataPreface']
@@ -89,8 +87,7 @@ class AvidMetadataPreface(MXFDataSet):
                 key_name = 'audio_channels'
             else:
                 try:
-                    cvalue = self.primer.convert(localtag, localdata)
-                    key_name = self.rp210.get_triplet_from_format_ul(self.primer.data[localtag])[1]
+                    key_name, cvalue = self.primer.decode_from_local_tag(localtag, localdata)
 
                 except Exception, _error:
                     print "Could not convert to [data:%s] format %s" % (localdata.encode('hex_codec'), self.primer.data[localtag].encode('hex_codec'))
