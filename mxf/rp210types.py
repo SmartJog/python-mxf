@@ -109,6 +109,25 @@ class Array(Converter, dict):
 
         return vector
 
+    def write(self):
+
+        ret = []
+        if len(self.value):
+            vl_list_size = Integer(len(self.value), 'UInt32').write()
+            if hasattr(self.subconv.caps, 'search'):
+                match = self.subconv.caps.search(self.subtype)
+                vl_item_size = Integer(len(self.subconv(self.value[0], match).write()), 'UInt32').write()
+                ret += [self.subconv(item, match).write() for item in self.value]
+            else:
+                vl_item_size = Integer(len(self.subconv(self.value[0]).write()), 'UInt32').write()
+                ret += [self.subconv(item).write() for item in self.value]
+
+        else:
+            vl_list_size = Integer(0, 'UInt32').write()
+            vl_item_size = Integer(0, 'UInt32').write()
+
+        return vl_list_size + vl_item_size + ''.join(ret)
+
 
 class VariableArray(Array):
 
@@ -131,6 +150,19 @@ class VariableArray(Array):
                 vector.append(Integer(self.value[item*ar_item_size:(item+1)*ar_item_size], self.subtype))
 
         return vector
+
+    def write(self):
+        vector = []
+        if self.subtype == "16 bit Unicode String":
+            for item in self.value:
+                vector.append(String(item, self.subtype).write())
+            ret = '\x00\x00'.join(vector) + '\x00\x00'
+        else:
+            for item in self.value:
+                vector.append(Integer(item, self.subtype).write())
+            ret = ''.join(vector)
+
+        return ret
 
 
 class Reference(Converter):
