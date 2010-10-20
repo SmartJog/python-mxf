@@ -6,7 +6,7 @@ import re
 
 from mxf.common import InterchangeObject, OrderedDict, Singleton
 from mxf.rp210 import RP210Avid as RP210, RP210Exception
-from mxf.rp210types import Array, Reference
+from mxf.rp210types import Array, Reference, Integer
 
 class S377MException(Exception):
     """ Raised on non SMPTE 377M input. """
@@ -111,18 +111,12 @@ class MXFPartition(InterchangeObject):
             idx += pp_item_size
 
         # Read essence containers list, if any
-        ec_list_size = self.ber_decode_length(data[idx:idx+4], 4)
-        ec_item_size = self.ber_decode_length(data[idx+4:idx+8], 4)
-
-        idx = 8
-        while ec_list_size > len(self.data['essence_containers']):
-            self.data['essence_containers'].append(data[idx:idx+ec_item_size])
-            idx += ec_item_size
+        self.data['essence_containers'] = Array(data[idx:], 'StrongReferenceArray').read()
 
         self.__smtpe_377m_check()
 
         if self.debug:
-            print "%d essence containers of %d size in partition:" % (ec_list_size, ec_item_size)
+            print "%d essences in partition:" % len(self.data['essence_containers'])
 
         return
 
@@ -130,7 +124,7 @@ class MXFPartition(InterchangeObject):
         for key, item in self.data.items():
             if key == 'essence_containers':
                 for i, essence in enumerate(item):
-                    print "Essence %d: " % i, essence.encode('hex_codec')
+                    print "Essence %d: " % i, essence.read()
             else:
                 print "%s: %s" % (key, item.encode('hex_codec'))
         return
@@ -165,12 +159,12 @@ class MXFPrimer(InterchangeObject):
 
         data = self.fdesc.read(self.length)
 
-        lt_list_size = self.ber_decode_length(data[0:4], 4)
-        lt_item_size = self.ber_decode_length(data[4:8], 4)
+        lt_list_size = Integer(data[0:4], 'UInt32').read()
+        lt_item_size = Integer(data[4:8], 'UInt32').read()
 
         idx = 8
         while lt_list_size > len(self.data):
-            self.data[data[idx:idx+2]] = data[idx+2:idx+lt_item_size]
+            self.data[data[idx:idx+2]] = Reference(data[idx+2:idx+lt_item_size], 'Universal Label').read()
             idx += lt_item_size
 
         if self.debug:
@@ -289,7 +283,7 @@ class MXFDataSet(InterchangeObject):
         # Get all items
         offset = idx
         while offset < idx + self.length:
-            set_size = self.ber_decode_length(data[offset+2:offset+4], 2)
+            set_size = Integer(data[offset+2:offset+4], 'UInt16').read()
             localtag = data[offset:offset+2]
             localdata = data[offset+4:offset+set_size+4]
             self.data['by_tag'].update({localtag: localdata})
@@ -375,7 +369,7 @@ class RandomIndexMetadata(InterchangeObject):
             })
             idx += 12
 
-        total_part_length = self.ber_decode_length(data[idx:idx+4], 4)
+        total_part_length = Integer(data[idx:idx+4], 'UInt32').read()
 
         if 16 + self.bytes_num + self.length != total_part_length:
             raise S377MException('Overall length differs from UL length')
