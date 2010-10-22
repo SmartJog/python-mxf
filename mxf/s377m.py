@@ -31,8 +31,10 @@ class KLVFill(InterchangeObject):
         if self.debug:
             print "data:", self.fdesc.read(self.length).encode('hex_codec')
         else:
-            self.fdesc.seek(self.fdesc.tell() + self.length)
+            self.data = self.fdesc.read(self.length)
 
+    def write(self):
+        self.fdesc.write(self.key + self.ber_encode_length(len(self.data), bytes_num=8).decode('hex_codec') + self.data)
 
 class KLVDarkComponent(KLVFill):
     """ Generic Dark data handler class. """
@@ -120,6 +122,16 @@ class MXFPartition(InterchangeObject):
 
         return
 
+    def write(self):
+        ret = ""
+        for pp_item, _ in self.part_items:
+            ret += self.data[pp_item]
+
+        ret += Array(self.data['essence_containers'], 'StrongReferenceArray').write()
+
+        self.fdesc.write(self.key + self.ber_encode_length(len(ret), bytes_num=8).decode('hex_codec') + ret)
+        return
+
     def human_readable(self):
         for key, item in self.data.items():
             if key == 'essence_containers':
@@ -178,6 +190,19 @@ class MXFPrimer(InterchangeObject):
         for etag in ("0001", "0002", "0003", "0004", "0010", "000f", "001b"):
             self.data[etag.decode('hex_codec')] = (28 * '0' + etag).decode('hex_codec')
 
+        return
+
+    def write(self):
+
+        ret = ""
+        for tag, ful in self.data.items():
+            ret += tag + Reference(ful, 'Universal Label').write()
+
+        lt_list_size = Integer(len(self.data), 'UInt32').write()
+        lt_item_size = Integer(len(ret) / len(self.data), 'UInt32').write()
+        ret = lt_list_size + lt_item_size + ret
+
+        self.fdesc.write(self.key + self.ber_encode_length(len(ret), bytes_num=8).decode('hex_codec') + ret)
         return
 
     def decode_from_local_tag(self, tag, value):
@@ -325,6 +350,18 @@ class MXFDataSet(InterchangeObject):
 
         return
 
+    def write(self):
+
+        ret = []
+        for key_name, value in self.data['by_format_ul'].items():
+            localtag, conv = self.primer.encode_from_key_name(key_name, value.read())
+            cvalue = conv.write()
+            ret.append(localtag + self.ber_encode_length(len(cvalue), bytes_num=2, prefix=False).decode('hex_codec') + cvalue)
+
+        ret = ''.join(ret)
+        self.fdesc.write(self.key + self.ber_encode_length(len(ret), bytes_num=8).decode('hex_codec') + ret)
+        return
+
     def human_readable(self, klv_hash=None, indent=None):
 
         if not indent:
@@ -394,4 +431,15 @@ class RandomIndexMetadata(InterchangeObject):
         if 16 + self.bytes_num + self.length != total_part_length:
             raise S377MException('Overall length differs from UL length')
         return
+
+    def write(self):
+        ret = ""
+        for partition in self.data['partition']:
+            ret += partition['body_sid'] + partition['byte_offset']
+
+        total_part_length = Integer(16 + 9 + 4 + len(ret), 'UInt32').write()
+
+        self.fdesc.write(self.key + self.ber_encode_length(len(ret) + 4, bytes_num=8).decode('hex_codec') + ret + total_part_length)
+        return
+
 
