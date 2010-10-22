@@ -293,7 +293,7 @@ class MXFDataSet(InterchangeObject):
             key_name = localtag.encode('hex_codec')
             try:
                 cvalue = self.primer.convert(localtag, localdata)
-                key_name = self.rp210.get_triplet(self.primer.data[localtag])[1]
+                key_name = self.rp210.get_triplet_from_format_ul(self.primer.data[localtag])[1]
             except KeyError, _error:
                 print "Primer Pack is missing an entry for:", localtag.encode('hex_codec')
 

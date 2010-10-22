@@ -90,7 +90,7 @@ class AvidMetadataPreface(MXFDataSet):
             else:
                 try:
                     cvalue = self.primer.convert(localtag, localdata)
-                    key_name = self.rp210.get_triplet(self.primer.data[localtag])[1]
+                    key_name = self.rp210.get_triplet_from_format_ul(self.primer.data[localtag])[1]
 
                 except Exception, _error:
                     print "Could not convert to [data:%s] format %s" % (localdata.encode('hex_codec'), self.primer.data[localtag].encode('hex_codec'))

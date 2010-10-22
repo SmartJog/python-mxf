@@ -83,7 +83,7 @@ class RP210(object):
         ret = vtype.lstrip().capitalize().replace(' ', '_')
         return ret.lower()
 
-    def get_triplet(self, format_ul):
+    def get_triplet_from_format_ul(self, format_ul):
         """ Returns RP210 triplet for given format UL. """
 
         eul = format_ul.encode('hex_codec')
