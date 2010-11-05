@@ -88,7 +88,7 @@ class RP210TypesSymetricTest(unittest.TestCase):
 
         for vtype, value in test_values:
             cvalue = conv.VariableArray(conv.VariableArray(value, vtype).write(), vtype).read()
-            self.assertEqual(value, [item.read() for item in cvalue])
+            self.assertEqual(value, cvalue)
 
     def test_array(self):
         """ Test VariableArray conversion methods. """
@@ -100,7 +100,7 @@ class RP210TypesSymetricTest(unittest.TestCase):
 
         for vtype, value in test_values:
             cvalue = conv.Array(conv.Array(value, vtype).write(), vtype).read()
-            self.assertEqual(value, [item.read() for item in cvalue])
+            self.assertEqual(value, cvalue)
 
 
 if __name__ == '__main__':

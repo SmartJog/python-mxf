@@ -84,7 +84,7 @@ class Array(Converter, dict):
     def __str__(self):
         vector = self.read()
         if len(vector):
-            return 'Array of %d items of %d length in bytes.' % (len(vector), len(str(vector[0].read())))
+            return 'Array of %d items of %d length in bytes.' % (len(vector), len(str(vector[0])))
         else:
             return 'Array of %d items.' % len(vector)
 
@@ -99,9 +99,9 @@ class Array(Converter, dict):
         while vl_list_size > len(vector):
             if hasattr(self.subconv.caps, 'search'):
                 match = self.subconv.caps.search(self.subtype)
-                item = self.subconv(value[idx:idx+vl_item_size], match)
+                item = self.subconv(value[idx:idx+vl_item_size], match).read()
             else:
-                item = self.subconv(value[idx:idx+vl_item_size])
+                item = self.subconv(value[idx:idx+vl_item_size]).read()
 
             #print "Adding item of type", type(item), "to array."
             vector.append(item)
@@ -147,11 +147,11 @@ class VariableArray(Array):
         vector = []
         if self.subtype == '16 bit Unicode String':
             for item in self.value[0:-2].split('\x00\x00'):
-                vector.append(String(item, self.subtype))
+                vector.append(String(item, self.subtype).read())
         else:
             ar_item_size = Integer(None, self.subtype).length
             for item in range(0, len(self.value) / ar_item_size):
-                vector.append(Integer(self.value[item*ar_item_size:(item+1)*ar_item_size], self.subtype))
+                vector.append(Integer(self.value[item*ar_item_size:(item+1)*ar_item_size], self.subtype).read())
 
         return vector
 
