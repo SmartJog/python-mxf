@@ -4,6 +4,7 @@
 
 from mxf.common import InterchangeObject, OrderedDict
 from mxf.s377m import MXFDataSet
+from mxf.rp210types import Reference, Integer
 
 class AvidObjectDirectory(InterchangeObject):
     """ Avid ObjectDirectory parser. """
@@ -22,16 +23,16 @@ class AvidObjectDirectory(InterchangeObject):
 
         data = self.fdesc.read(self.length)
 
-        od_list_size = self.ber_decode_length(data[0:8], 8)
-        od_item_size = self.ber_decode_length(data[8], 1)
+        od_list_size = Integer(data[0:8], 'UInt64').read()
+        od_item_size = Integer(data[8], 'UInt8').read()
         idx = 9
 
         self.data = []
         while od_list_size > len(self.data):
             self.data.append((
-                data[idx:idx+16],                               # key
-                self.ber_decode_length(data[idx+16:idx+24], 9), # offset
-                data[idx+24],                                   # flag
+                Reference(data[idx:idx+16]).read(),            # key
+                Integer(data[idx+16:idx+24], 'UInt64').read(), # offset
+                Integer(data[idx+24], 'UInt8').read(),         # flag
             ))
             idx += od_item_size
 
