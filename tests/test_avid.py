@@ -13,6 +13,12 @@ import test_s377m as testmxf
 class AvidSymetricTest(unittest.TestCase):
     """ Verify read/write methods of Avid objects are symetric. """
 
+    def test_avid_object_directory(self):
+        """ Test Avid Object Directory """
+
+        data_read, data_write = testmxf.read_and_write('avid_object_directory', avid.AvidObjectDirectory)
+        self.assertEqual(data_read, data_write)
+
     def test_avid_metadata_preface(self):
         """ Test Avid Metadata Preface """
 

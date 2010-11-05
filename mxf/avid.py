@@ -39,6 +39,20 @@ class AvidObjectDirectory(InterchangeObject):
         if self.debug:
             print "%d objects of %d bytes size in Object Directory" % (od_list_size, od_item_size)
 
+    def write(self):
+
+        ret = []
+        for key, offset, flag in self.data:
+            ret.append(Reference(key).write())
+            ret.append(Integer(offset, 'UInt64').write())
+            ret.append(Integer(flag, 'UInt8').write())
+
+        ret = Integer(len(self.data), 'UInt64').write() \
+            + Integer(len(''.join(ret[0:3])), 'UInt8').write() \
+            + ''.join(ret)
+        self.fdesc.write(self.key + self.ber_encode_length(len(ret), bytes_num=8).decode('hex_codec') + ret)
+        return
+
     def human_readable(self):
         print "Object".rjust(32, ' '), "Offset".rjust(10, ' '), "Flag"
         for item in self.data:
