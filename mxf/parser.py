@@ -5,7 +5,7 @@
 
 from mxf.common import InterchangeObject
 from mxf.s377m import MXFPartition, MXFDataSet, MXFPreface, MXFPrimer, KLVFill, KLVDarkComponent, RandomIndexMetadata
-from mxf.avid import AvidObjectDirectory, AvidAAFDefinition, AvidMetadataPreface
+from mxf.avid import AvidObjectDirectory, AvidAAFDefinition, AvidMetadataPreface, AvidMXFDataSet
 
 SMPTE_PARTITION_PACK_LABEL = '060e2b34020501010d010201'
 
@@ -123,25 +123,29 @@ class MXFParser(object):
              '060e2b34025301010d01010101011100', # Source Clip
              '060e2b34025301010d01010101011400', # Timecode Component
 
-
-             '060e2b34025301010d01010101012800', # CDCI Essence Descriptor
-
              '060e2b34025301010d01010101011800', # ContentStorage
 
              '060e2b34025301010d01010101012e00', # AVID
              '060e2b34025301010d01010101013000', # Identification
 
-             '060e2b34025301010d01010101013600', # Material Package
              '060e2b34025301010d01010101013700', # Source Package (File, Physical)
 
              '060e2b34025301010d01010101013b00', # Timeline Track
-             '060e2b34025301010d01010101013f00', # AVID
 
              '060e2b34025301010d01010101014200', # GenericSoundEssenceDescriptor
              '060e2b34025301010d01010101014400', # MultipleDescriptor
              '060e2b34025301010d01010101014800', # WaveAudioDescriptor
              ):
                 klv = MXFDataSet(fd, header_metadata_primer_pack)
+                klv.read()
+
+            elif key in (
+             '060e2b34025301010d01010101012800', # CDCI Essence Descriptor
+
+             '060e2b34025301010d01010101013600', # Material Package
+             '060e2b34025301010d01010101013f00', # AVID
+            ):
+                klv = AvidMXFDataSet(fd, header_metadata_primer_pack)
                 klv.read()
 
             elif key == '9613b38a87348746f10296f056e04d2a':
