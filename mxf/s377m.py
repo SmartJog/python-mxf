@@ -220,10 +220,6 @@ class MXFPrimer(InterchangeObject):
         if self.debug:
             print "%d local tag mappings of %d size in Primer Pack" % (lt_list_size, lt_item_size)
 
-        # FIXME: this is a big HACK
-        for etag in ("0001", "0002", "0003", "0004", "0010", "000f", "001b"):
-            self.data[etag.decode('hex_codec')] = (28 * '0' + etag).decode('hex_codec')
-
         return
 
     def write(self):
