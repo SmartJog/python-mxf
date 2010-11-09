@@ -147,7 +147,7 @@ class MXFPrimer(InterchangeObject):
 
     def __init__(self, fdesc, rp210=None, debug=False):
         InterchangeObject.__init__(self, fdesc, debug)
-        self.data = {}
+        self.data = OrderedDict()
 
         if rp210:
             self.rp210 = rp210
@@ -165,10 +165,8 @@ class MXFPrimer(InterchangeObject):
         ret += ['localtags=%d' % len(self.data)]
         if self.debug:
             ret += ['\n']
-            data_keys = self.data.keys()
-            data_keys.sort()
-            for i in data_keys:
-                ret += ['%s: %s\n' % (i.encode('hex_codec'), self.data[i].encode('hex_codec'))]
+            for i, j in self.data.items():
+                ret += ['%s: %s\n' % (i.encode('hex_codec'), j.encode('hex_codec'))]
         return ' '.join(ret) + '>'
 
     @staticmethod
