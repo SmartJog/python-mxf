@@ -70,10 +70,8 @@ class RP210(object):
             '060e2b34010101050e0b01030101010a': ('UInt16', 'SMPTE UInt16', 'Unkown format 1'),
         }
 
-        for key, items in extra_items.iteritems():
-            extra_items[key] = (items[0], self._flat_style(items[1]), items[2])
+        self.inject(extra_items)
 
-        self.data.update(extra_items)
 
     @staticmethod
     def _flat_style(vtype):
@@ -85,6 +83,13 @@ class RP210(object):
 
         ret = vtype.lstrip().capitalize().replace(' ', '_')
         return ret.lower()
+
+    def inject(self, extra_items):
+        """ Insert new mappings in RP210. """
+
+        for key, items in extra_items.iteritems():
+            self.data[key.rjust(32, '0')] = (items[0], self._flat_style(items[1]), items[2])
+        return
 
     def get_triplet_from_format_ul(self, format_ul):
         """ Returns RP210 triplet for given format UL. """
@@ -169,10 +174,7 @@ class RP210Avid(RP210):
             '82149f0b14ba0ce0473f46bf562e49b6': ('Int32', 'Avid Int32? 14', ''),
         }
 
-        for key, items in avid_items.iteritems():
-            avid_items[key] = (items[0], self._flat_style(items[1]), items[2])
-
-        self.data.update(avid_items)
+        self.inject(avid_items)
 
 
 if __name__ == "__main__":
