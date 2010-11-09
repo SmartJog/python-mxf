@@ -171,6 +171,17 @@ class MXFPrimer(InterchangeObject):
                 ret += ['%s: %s\n' % (i.encode('hex_codec'), self.data[i].encode('hex_codec'))]
         return ' '.join(ret) + '>'
 
+    def inject(self, mappings):
+        """ Insert new mappings in Primer.
+
+        Allows insertion of new local tag to format UL mappings with their
+        RP210 basic type.
+        """
+
+        for item in mappings:
+            self.data[item.decode('hex_codec')] = item.rjust(32, '0').decode('hex_codec')
+        return
+
     def read(self):
 
         data = self.fdesc.read(self.length)
