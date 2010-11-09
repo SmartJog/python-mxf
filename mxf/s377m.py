@@ -338,7 +338,7 @@ class MXFDataSet(InterchangeObject):
         ret += ['size=%d' % self.length]
         ret += ['InstanceUID=%s' % self.i_guid]
         if self.debug:
-            ret += ['tags=%d:\n' % len(self.data) \
+            ret += ['tags=%d:\n' % len(self.data['by_tag']) \
                 + '\n'.join(["%s: %s %d bytes" % (
                     i.encode('hex_codec'),
                     j.encode('hex_codec').ljust(64, ' ')[:64],
