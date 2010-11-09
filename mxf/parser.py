@@ -5,7 +5,7 @@
 
 from mxf.common import InterchangeObject
 from mxf.s377m import MXFPartition, MXFDataSet, MXFPreface, MXFPrimer, KLVFill, KLVDarkComponent, RandomIndexMetadata
-from mxf.avid import AvidObjectDirectory, AvidMetadataPreface
+from mxf.avid import AvidObjectDirectory, AvidAAFDefinition, AvidMetadataPreface
 
 SMPTE_PARTITION_PACK_LABEL = '060e2b34020501010d010201'
 
@@ -110,7 +110,7 @@ class MXFParser(object):
              '060e2b34025301010d01010101012200', # Dark Links to Data/Container/Codecs definitions
             ):
                 # Avid DataSet
-                klv = MXFDataSet(fd, header_metadata_primer_pack, debug=False, dark=True)
+                klv = AvidAAFDefinition(fd, header_metadata_primer_pack)
                 klv.read()
 
             elif key in (

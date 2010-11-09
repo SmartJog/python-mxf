@@ -26,6 +26,13 @@ class AvidSymetricTest(unittest.TestCase):
         data_read, data_write = testmxf.read_and_write('avid_metadata_preface', avid.AvidMetadataPreface, primer)
         self.assertEqual(data_read, data_write)
 
+    def test_avid_aaf_definition(self):
+        """ Test Avid AAF Definition """
+
+        primer = testmxf.load_klv('primer', s377m.MXFPrimer)
+        data_read, data_write = testmxf.read_and_write('avid_aaf_definition', avid.AvidAAFDefinition, primer)
+        self.assertEqual(data_read, data_write)
+
 
 if __name__ == '__main__':
     SUITE = unittest.TestLoader().loadTestsFromTestCase(AvidSymetricTest)

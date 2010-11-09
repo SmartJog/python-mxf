@@ -62,6 +62,24 @@ class AvidObjectDirectory(InterchangeObject):
         return
 
 
+class AvidAAFDefinition(MXFDataSet):
+    """ Avid AAF definition KLV parser. """
+
+    _extra_mappings = {
+        '0003': ('StrongReferenceArray', 'Avid links to compound types', ''),
+        '0004': ('StrongReferenceArray', 'Avid links to simple types', ''),
+        '0010': ('Boolean', 'Signedness', ''),
+        '000f': ('UInt8', 'Length in bytes', ''),
+        '001b': ('StrongReference', 'Unkown data 1', ''),
+    }
+
+    def __init__(self, fdesc, primer, debug=False):
+        # Prepare object specific Primer
+        aprim = MXFPrimer.customize(primer, RP210Avid(), self._extra_mappings)
+        MXFDataSet.__init__(self, fdesc, aprim, debug=debug, dark=True)
+        self.set_type = 'AvidAAFDefinition'
+
+
 class AvidMetadataPreface(MXFDataSet):
     """ Avid metadata dictionary pseudo Preface parser. """
 
