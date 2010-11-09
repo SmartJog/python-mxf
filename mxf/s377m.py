@@ -411,14 +411,15 @@ class MXFDataSet(InterchangeObject):
                     klv_hash = klv_hash.pop(j.read()).human_readable(klv_hash, indent+1)
 
             elif isinstance(j, Array):
-                for k in j.read():
-                    if isinstance(j.read()[0], Reference):
-                        if k.read() not in klv_hash:
+                if j.subconv is Reference:
+                    for k in j.read():
+                        if k not in klv_hash:
                             print "%s%s: broken reference, %s" % (4 * indent * ' ' + '  ', i, k)
                         else:
                             print ""
-                            klv_hash.pop(k.read()).human_readable(klv_hash, indent+1)
-                    else:
+                            klv_hash.pop(k).human_readable(klv_hash, indent+1)
+                else:
+                    for k in j.read():
                         print "%s%s: %s %s" % (4 * indent * ' ' + '  ', i, k, type(k))
             else:
                 print "%s%s: %s %s" % (4 * indent * ' ' + '  ', i, j, type(j))
