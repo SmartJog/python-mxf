@@ -171,6 +171,31 @@ class MXFPrimer(InterchangeObject):
                 ret += ['%s: %s\n' % (i.encode('hex_codec'), self.data[i].encode('hex_codec'))]
         return ' '.join(ret) + '>'
 
+    @staticmethod
+    def customize(primer, spec, mappings=None):
+        """ Modifies a primer to abide @spec rules with optional @mappings.
+
+        @spec: instance of a mxf.rp210 like object
+        @mappings: a dictionary that is passed to inject method
+
+        @returns: custimized Primer object.
+        """
+
+        import copy
+        aprim = copy.copy(primer)
+
+        if mappings:
+            spec.inject(mappings)
+
+        aprim.data = {}
+        aprim.data.update(primer.data)
+        aprim.rp210 = spec
+
+        if mappings:
+            aprim.inject(mappings.keys())
+
+        return aprim
+
     def inject(self, mappings):
         """ Insert new mappings in Primer.
 
