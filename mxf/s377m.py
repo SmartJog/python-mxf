@@ -254,21 +254,19 @@ class MXFPrimer(InterchangeObject):
         except RP210Exception:
             return key, evalue
 
-    def encode_from_key_name(self, key_name, data):
-        """ Search format UL corresponding to @key_name. """
+    def encode_from_local_tag(self, tag, value):
+        """ Encode data according to local tag mapping to format Universal Labels. """
 
-        tag = None
-        ful = self.rp210.get_triplet_from_key_name(key_name)[0]
-        for tag, format_ul in self.data.iteritems():
-            if ful == format_ul.encode('hex_codec'):
-                break
-        else:
-            raise S377MException("Could not find a format UL '%s' in Primer" % ful)
+        etag = tag.encode('hex_codec')
 
+        if tag not in self.data.keys():
+            return "Error: Local key '%s' not found in primer" % etag
+
+        # SMTPE RP 210 conversion
         try:
-            return tag, self.rp210.convert(ful.decode('hex_codec'), data)
+            return tag, self.rp210.convert(self.data[tag], value)
         except RP210Exception:
-            return tag, data
+            return tag, value
 
 
 class MXFDataSet(InterchangeObject):
@@ -362,7 +360,6 @@ class MXFDataSet(InterchangeObject):
             set_size = Integer(data[offset+2:offset+4], 'UInt16').read()
             localtag = data[offset:offset+2]
             localdata = data[offset+4:offset+set_size+4]
-            self.data['by_tag'].update({localtag: localdata})
             offset += set_size + 4
 
             cvalue = None
@@ -376,6 +373,7 @@ class MXFDataSet(InterchangeObject):
                 print "Could not convert to [data:%s] format %s" % (localdata.encode('hex_codec'), self.primer.data[localtag].encode('hex_codec'))
                 cvalue = "[data:%s]" % localdata.encode('hex_codec')
 
+            self.data['by_tag'].update({localtag: cvalue})
             self.data['by_format_ul'].update({key_name: cvalue})
 
         return
@@ -383,9 +381,14 @@ class MXFDataSet(InterchangeObject):
     def write(self):
 
         ret = []
-        for key_name, value in self.data['by_format_ul'].items():
-            localtag, conv = self.primer.encode_from_key_name(key_name, value.read())
-            cvalue = conv.write()
+        for tag, value in self.data['by_tag'].items():
+            # Not all values are decoded
+            if isinstance(value, basestring):
+                localtag = tag
+                cvalue = value.decode('hex_codec')
+            else:
+                localtag, conv = self.primer.encode_from_local_tag(tag, value.read())
+                cvalue = conv.write()
             ret.append(localtag + self.ber_encode_length(len(cvalue), bytes_num=2, prefix=False).decode('hex_codec') + cvalue)
 
         ret = ''.join(ret)
