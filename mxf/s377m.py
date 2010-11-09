@@ -199,6 +199,22 @@ class MXFPrimer(InterchangeObject):
         except RP210Exception:
             return key, evalue
 
+    def encode_from_key_name(self, key_name, data):
+        """ Search format UL corresponding to @key_name. """
+
+        tag = None
+        ful = self.rp210.get_triplet_from_key_name(key_name)[0]
+        for tag, format_ul in self.data.iteritems():
+            if ful == format_ul.encode('hex_codec'):
+                break
+        else:
+            raise S377MException("Could not find a format UL '%s' in Primer" % ful)
+
+        try:
+            return tag, self.rp210.convert(ful.decode('hex_codec'), data)
+        except RP210Exception:
+            return tag, data
+
 
 class MXFDataSet(InterchangeObject):
     """ MXF parsing class specialized for loading Sets and Packs. """
