@@ -6,6 +6,7 @@ AM_INIT_AUTOMAKE([foreign])
 
 AM_PATH_PYTHON
 AC_PROG_SED
+AC_PROG_LN_S
 
 AC_CONFIG_FILES([
     Makefile

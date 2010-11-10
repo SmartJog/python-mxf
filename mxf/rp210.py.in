@@ -3,6 +3,7 @@
 
 """ Helper module to convert MXF data to python types according to SMPTE RP210. """
 
+import os
 import csv
 from pprint import pprint
 
@@ -22,8 +23,10 @@ class RP210(object):
     Helper class to convert MXF data types to python objects and vice-versa.
     """
 
+    RP210_SPEC_PATH = os.environ.get('RP210_SPEC_PATH', "@pkgdatadir@/RP210v10-pub-20070121-1600.csv")
+
     def __init__(self):
-        csv_file = open('data/RP210v10-pub-20070121-1600.csv', 'r')
+        csv_file = open(self.RP210_SPEC_PATH, 'r')
         spec = csv.DictReader(csv_file)
         self.data = {}
 
