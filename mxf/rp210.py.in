@@ -130,27 +130,29 @@ class RP210Avid(RP210):
         RP210.__init__(self)
         # Adding Avid format UL
         avid_items = {
-            '8b4ebaf0ca0940b554405d72bfbd4b0e': ('Int32', 'Avid Int32? 1', ''),
-            '8bb3ad5a842b0585f6e59f10248e494c': ('Int16', 'Avid Int16? 2', ''),
-            '93c0b44a156ed52a945df2faf4654771': ('Int16', 'Avid Int16? 3', ''),
+            # metadata name: aafInt32
+            '8b4ebaf0ca0940b554405d72bfbd4b0e': ('Int32', 'Min GOP', ''),
+            '8bb3ad5a842b0585f6e59f10248e494c': ('Int32', 'Stream Type', ''),
+            '93c0b44a156ed52a945df2faf4654771': ('Int32', 'GOP Structure', ''),
+            'a024006094eb75cbce2aca4d51ab11d3': ('Int32', 'Resolution ID', ''),
+            'a024006094eb75cbce2aca4f51ab11d3': ('Int32', 'Image Size', ''),
+            'a024006094eb75cbce2aca5051ab11d3': ('Int32', 'Frame Sample Size', ''),
+            'a029006094eb75cb9d15fca354c511d3': ('Int32', 'Offset To Frame Indexes', ''),
+            'a9bac6e98e92018d36a2806248054b21': ('Int32', 'Max GOP', ''),
+            'b1f07750aad8875d7839ba85999b4d60': ('Int32', 'MPEG Version', ''),
+            '82149f0b14ba0ce0473f46bf562e49b6': ('Int32', 'Bit Rate', ''),
 
-            'a01c0004ac969f506095818347b111d4': ('StrongReferenceArray', 'Avid Metadata 1', 'AvidDef1'),
-            'a01c0004ac969f506095818547b111d4': ('StrongReferenceArray', 'Avid Metadata 2', 'AvidDef2'),
+            # metadata name: kAAFTypeID_TaggedValueStrongReferenceVector
+            'a01c0004ac969f506095818347b111d4': ('StrongReferenceArray', 'Mob Attribute List', ''),
+            'a01c0004ac969f506095818547b111d4': ('StrongReferenceArray', 'Tagged Value Attribute List', ''),
 
-            'a024006094eb75cbce2aca4d51ab11d3': ('Int32', 'Avid Int32? 4', ''),
-            'a024006094eb75cbce2aca4f51ab11d3': ('Int32', 'Avid Int32? 5', ''),
-            'a024006094eb75cbce2aca5051ab11d3': ('Int32', 'Avid Int32? 6', ''),
-            'a029006094eb75cb9d15fca354c511d3': ('Int32', 'Avid Int32? 7', ''),
-            'a9bac6e98e92018d36a2806248054b21': ('Int32', 'Avid Int32? 8', ''),
+            # metadata name: Boolean
+            'a573fa765aa6468a06e929b37d154fd7': ('Boolean', 'Random Access', ''),
+            'a577a500581c9f050fbf8f904d984e06': ('Boolean',  'Leading Discard',  ''),
+            'b94a62f973fe6063f3e9dc41bbec46bd': ('Boolean',  'Trailing Discard',  ''),
 
-            'a573fa765aa6468a06e929b37d154fd7': ('Int16', 'Avid Int16? 9', ''),
-            'a577a500581c9f050fbf8f904d984e06': ('Int8',  'Avid Int8?  10',  ''),
-
-            'b1f07750aad8875d7839ba85999b4d60': ('Int16', 'Avid Int16? 11', ''),
-            'b94a62f973fe6063f3e9dc41bbec46bd': ('Int8',  'Avid Int8?  12',  ''),
-            'bf734ae52b16b9eaf8fd061dea7e46ba': ('Int16', 'Avid Int16? 13', ''),
-
-            '82149f0b14ba0ce0473f46bf562e49b6': ('Int32', 'Avid Int32? 14', ''),
+            # metadata name: aafUInt16
+            'bf734ae52b16b9eaf8fd061dea7e46ba': ('UInt16', 'Profile And Level', ''),
         }
 
         self.inject(avid_items)
