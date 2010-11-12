@@ -191,8 +191,14 @@ class Reference(Converter):
         r'PackageID',
     ]) + ')')
 
-    def __init__(self, value, _match=None):
+    def __init__(self, value, match=None):
         Converter.__init__(self, value)
+        if not match:
+            self.subtype = 'Reference'
+        elif isinstance(match, basestring):
+            self.subtype = match
+        else:
+            self.subtype = match.group(0)
 
     def __str__(self):
         return self.value.encode('hex_codec')
