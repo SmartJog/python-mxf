@@ -405,22 +405,32 @@ class MXFDataSet(InterchangeObject):
                 continue
 
             elif isinstance(j, Reference):
-                if j.read() not in klv_hash:
-                    print "%s%s: broken reference, %s" % (4 * indent * ' ' + '  ', i, j)
+                if j.subtype in ('AUID', 'PackageID'):
+                    print "%s%s: %s" % (4 * indent * ' ' + '  ', i, j)
+                elif j.read() not in klv_hash:
+                    print "%s%s: broken reference, %s %s" % (4 * indent * ' ' + '  ', i, j, j.subtype)
+                elif not klv_hash[j.read()]['used']:
+                    klv_hash[j.read()]['used'] = True
+                    klv_hash[j.read()]['klv'].human_readable(klv_hash, indent+1)
                 else:
-                    klv_hash = klv_hash.pop(j.read()).human_readable(klv_hash, indent+1)
+                    print "%s%s: <-> %s" % (4 * indent * ' ' + '  ', i, j)
 
             elif isinstance(j, Array):
                 if j.subconv is Reference:
                     for k in j.read():
-                        if k not in klv_hash:
-                            print "%s%s: broken reference, %s" % (4 * indent * ' ' + '  ', i, k)
-                        else:
+                        if j.subtype == 'AUID':
+                            print "%s%s: %s" % (4 * indent * ' ' + '  ', i, Reference(k))
+                        elif k not in klv_hash:
+                            print "%s%s: broken reference, %s" % (4 * indent * ' ' + '  ', i, Reference(k))
+                        elif not klv_hash[k]['used']:
                             print ""
-                            klv_hash.pop(k).human_readable(klv_hash, indent+1)
+                            klv_hash[k]['used'] = True
+                            klv_hash[k]['klv'].human_readable(klv_hash, indent+1)
+                        else:
+                            print "%s%s: <-> %s" % (4 * indent * ' ' + '  ', i, Reference(k))
                 else:
                     for k in j.read():
-                        print "%s%s: %s %s" % (4 * indent * ' ' + '  ', i, k, type(k))
+                        print "%s%s: %s" % (4 * indent * ' ' + '  ', i, k)
             else:
                 print "%s%s: %s %s" % (4 * indent * ' ' + '  ', i, j, type(j))
 
