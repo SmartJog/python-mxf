@@ -128,13 +128,21 @@ class InterchangeObject(object):
 
 class Singleton(object):
 
-    _instance = None
+    _instance = {}
 
-    def __init__(self, cls):
+    def __init__(self, cls, qualifier=None):
+
+        if qualifier:
+            sclass = str(cls) + qualifier
+        else:
+            sclass = str(cls)
+
         # Check whether we already have an instance
-        if Singleton._instance is None:
+        if not sclass in Singleton._instance:
             # Create and remember instance
-            Singleton._instance = cls()
+            Singleton._instance[sclass] = cls()
+
+        self._sclass = sclass
 
     def __getattr__(self, attribute):
         """ Delegate access to implementation.
@@ -143,7 +151,10 @@ class Singleton(object):
         @param attr Attribute wanted.
         @return Attribute
         """
-        return getattr(self._instance, attribute)
+        if attribute == '_sclass':
+            return object.__getattr__(self, '_sclass')
+        else:
+            return getattr(self._instance[self._sclass], attribute)
 
     def __setattr__(self, attribute, value):
         """ Delegate access to implementation.
@@ -153,7 +164,10 @@ class Singleton(object):
         @param value Vaule to be set.
         @return Result of operation.
         """
-        return setattr(self._instance, attribute, value)
+        if attribute == '_sclass':
+            return object.__setattr__(self, attribute, value)
+        else:
+            return setattr(self._instance[self._sclass], attribute, value)
 
 
 ################################################################################

@@ -2,9 +2,9 @@
 
 """ Implements basic classes to parse Avid specific MXF objects. """
 
-from mxf.common import InterchangeObject
+from mxf.common import InterchangeObject, Singleton
 from mxf.s377m import MXFDataSet, MXFPrimer
-from mxf.rp210 import RP210Avid
+from mxf.rp210 import RP210Avid, RP210
 from mxf.rp210types import Reference, Integer
 
 class AvidObjectDirectory(InterchangeObject):
@@ -75,7 +75,7 @@ class AvidAAFDefinition(MXFDataSet):
 
     def __init__(self, fdesc, primer, debug=False):
         # Prepare object specific Primer
-        aprim = MXFPrimer.customize(primer, RP210Avid(), self._extra_mappings)
+        aprim = MXFPrimer.customize(primer, Singleton(RP210, 'AvidAAFDefinition'), self._extra_mappings)
         MXFDataSet.__init__(self, fdesc, aprim, debug=debug, dark=True)
         self.set_type = 'AvidAAFDefinition'
 
@@ -91,7 +91,7 @@ class AvidMetadataPreface(MXFDataSet):
     }
 
     def __init__(self, fdesc, primer, debug=False):
-        aprim = MXFPrimer.customize(primer, RP210Avid(), self._extra_mappings)
+        aprim = MXFPrimer.customize(primer, Singleton(RP210, 'AvidMetadataPreface'), self._extra_mappings)
         MXFDataSet.__init__(self, fdesc, aprim, debug=debug, dark=True)
         self.set_type = 'AvidMetadataPreface'
 
@@ -100,7 +100,7 @@ class AvidMXFDataSet(MXFDataSet):
     """ Avid specific DataSet parser. """
 
     def __init__(self, fdesc, primer, debug=False):
-        aprim = MXFPrimer.customize(primer, RP210Avid()) #, self._extra_mappings)
+        aprim = MXFPrimer.customize(primer, Singleton(RP210Avid)) #, self._extra_mappings)
         MXFDataSet.__init__(self, fdesc, aprim, debug=debug, dark=True)
         self.set_type = 'Avid' + self.set_type
 

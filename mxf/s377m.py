@@ -4,7 +4,7 @@
 
 import re
 
-from mxf.common import InterchangeObject, OrderedDict
+from mxf.common import InterchangeObject, OrderedDict, Singleton
 from mxf.rp210 import RP210Exception, RP210
 from mxf.rp210types import Array, Reference, Integer
 
@@ -152,7 +152,7 @@ class MXFPrimer(InterchangeObject):
         if rp210:
             self.rp210 = rp210
         else:
-            self.rp210 = RP210()
+            self.rp210 = Singleton(RP210)
 
         if self.key and not re.search('060e2b34020501..0d01020101050100', self.key.encode('hex_codec')):
             raise S377MException('Not a valid Primer Pack key: %s' % self.key.encode('hex_codec'))
