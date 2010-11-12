@@ -61,7 +61,7 @@ class Array(Converter, dict):
     """
 
     caps = re.compile('(?:' + '|'.join([
-        r'(StrongReference|WeakReference)Array',
+        r'(StrongReference|WeakReference|AUID)Array',
         r'2 element array of (.+)',
         r'^Batch of (.+)$',
         r'(.+)Batch',
@@ -185,7 +185,7 @@ class Reference(Converter):
         r'(Weak|Strong)Reference$',
         r'As per ISO 11578 standard \(Annex A\)',
         r'^Universal Label',
-        r'AUID',
+        r'AUID$',
         r'UMID',
         r'UUID',
         r'PackageID',
