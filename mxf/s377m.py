@@ -294,7 +294,7 @@ class MXFDataSet(InterchangeObject):
          '060e2b34025301010d01010101013700': 'SourcePackage',
 
          '060e2b34025301010d01010101013b00': 'TimelineTrack',
-         '060e2b34025301010d01010101013f00': 'AVID DARK 2',
+         '060e2b34025301010d01010101013f00': 'TaggedValue', # Avid Dark 2
 
          '060e2b34025301010d01010101014200': 'GenericSoundEssenceDescriptor',
          '060e2b34025301010d01010101014400': 'MultipleDescriptor',
