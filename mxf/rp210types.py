@@ -124,7 +124,11 @@ class Array(Converter, dict):
 
         else:
             vl_list_size = Integer(0, 'UInt32').write()
-            vl_item_size = Integer(0, 'UInt32').write()
+            # Default value from SMPTE 377M
+            if self.subconv == Reference:
+                vl_item_size = Integer(16, 'UInt32').write()
+            else:
+                vl_item_size = Integer(0, 'UInt32').write()
 
         return vl_list_size + vl_item_size + ''.join(ret)
 
