@@ -398,6 +398,21 @@ class String(Converter):
             return cvalue
 
     def write(self):
+        if self.value.startswith('au16:'):
+            return '4c0002100100000000060e2b3401040101'.decode('hex_codec') + (self.value[5:].decode('utf_8') + '\0').encode('utf_16_le')
+
+        elif self.value.startswith('aint32:'):
+            dur = int(self.value[7:])
+            cvalue = ""
+            for _ in range(1, 5):
+                cvalue += "%02x" % (dur & 0x000000FF)
+                dur = dur >> 8
+
+            return ('4c0007010100000000060e2b3401040101' + cvalue).decode('hex_codec')
+
+        elif self.value.startswith('a??:'):
+            raise Exception('Cannot encode')
+
         return self.value.encode('utf_16_be')
 
 
