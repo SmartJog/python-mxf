@@ -7,7 +7,7 @@ from mxf.common import InterchangeObject
 from datetime import datetime
 import re
 
-CONVERTERS = ['Reference', 'Version', 'Integer', 'Boolean', 'TimeStamp', 'String', 'Rational', 'Length', 'Array', 'VariableArray']
+CONVERTERS = ['Reference', 'Version', 'Integer', 'Boolean', 'TimeStamp', 'String', 'Rational', 'Length', 'Array', 'VariableArray', 'AvidOffset']
 
 def select_converter(vtype):
     """ Select converter according to @vtype. """
@@ -418,5 +418,20 @@ class String(Converter):
             raise Exception('Cannot encode')
 
         return self.value.encode('utf_16_be')
+
+
+class AvidOffset(Converter):
+    """ Avid Offset converter.
+
+    Used to store (at least) the absolution position of AvidObjectDirectory.
+    """
+
+    caps = "AvidOffset"
+
+    def read(self):
+        return Integer(self.value[-8:], 'UInt64').read()
+
+    def write(self):
+        return Integer(self.value, 'UInt64').write().rjust(24, '\x00')
 
 

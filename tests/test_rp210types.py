@@ -102,6 +102,11 @@ class RP210TypesSymetricTest(unittest.TestCase):
             cvalue = conv.Array(conv.Array(value, vtype).write(), vtype).read()
             self.assertEqual(value, cvalue)
 
+    def test_avid_offset(self):
+        """ Test AvidOffset conversion methods. """
+        for i in (0, 1, 9, 42, 69, 380, 787, 130556):
+            self.assertEqual(i, conv.AvidOffset(conv.AvidOffset(i).write()).read())
+
 
 if __name__ == '__main__':
     SUITE = unittest.TestLoader().loadTestsFromTestCase(RP210TypesSymetricTest)
