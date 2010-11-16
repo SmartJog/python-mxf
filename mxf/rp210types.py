@@ -7,7 +7,7 @@ from mxf.common import InterchangeObject
 from datetime import datetime
 import re
 
-CONVERTERS = ['Reference', 'Version', 'Integer', 'Boolean', 'TimeStamp', 'String', 'Rational', 'Length', 'Array', 'VariableArray', 'AvidOffset']
+CONVERTERS = ['Reference', 'Version', 'Integer', 'Boolean', 'TimeStamp', 'String', 'Rational', 'Length', 'Array', 'VariableArray', 'AvidOffset', 'AvidVersion']
 
 def select_converter(vtype):
     """ Select converter according to @vtype. """
@@ -439,5 +439,21 @@ class AvidOffset(Converter):
 
     def write(self):
         return Integer(self.value, 'UInt64').write().rjust(24, '\x00')
+
+
+class AvidVersion(Version):
+    """ Avid Version converter. """
+
+    _compound = {
+        'AvidVersion': [
+            ('major',      'UInt16'),
+            ('minor',      'UInt16'),
+            ('tertiary',   'UInt16'),
+            ('patchLevel', 'UInt16'),
+            ('type',       'UInt8'), # Enum
+        ],
+    }
+
+    caps = re.compile('(AvidVersion)')
 
 
