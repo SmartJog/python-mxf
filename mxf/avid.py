@@ -99,8 +99,13 @@ class AvidMetadataPreface(MXFDataSet):
 class AvidMXFDataSet(MXFDataSet):
     """ Avid specific DataSet parser. """
 
+    _extra_mappings = {
+        '3c07': ('AvidVersion', 'Avid Version Tag', ''),
+        '3c03': ('AvidVersion', 'Avid Version Tag', ''),
+    }
+
     def __init__(self, fdesc, primer, debug=False):
-        aprim = MXFPrimer.customize(primer, Singleton(RP210Avid)) #, self._extra_mappings)
+        aprim = MXFPrimer.customize(primer, Singleton(RP210Avid), self._extra_mappings)
         MXFDataSet.__init__(self, fdesc, aprim, debug=debug, dark=True)
         self.set_type = 'Avid' + self.set_type
 

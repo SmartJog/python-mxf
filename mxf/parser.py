@@ -126,7 +126,6 @@ class MXFParser(object):
              '060e2b34025301010d01010101011800', # ContentStorage
 
              '060e2b34025301010d01010101012e00', # AVID
-             '060e2b34025301010d01010101013000', # Identification
 
              '060e2b34025301010d01010101013700', # Source Package (File, Physical)
 
@@ -141,6 +140,9 @@ class MXFParser(object):
 
             elif key in (
              '060e2b34025301010d01010101012800', # CDCI Essence Descriptor
+
+             # avid does not use standard 10 bytes ProductVersion
+             '060e2b34025301010d01010101013000', # Identification
 
              '060e2b34025301010d01010101013600', # Material Package
              '060e2b34025301010d01010101013f00', # AVID
