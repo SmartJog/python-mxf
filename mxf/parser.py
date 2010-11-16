@@ -162,8 +162,8 @@ class MXFParser(object):
 
             header_klvs.append(klv)
             if isinstance(klv, MXFDataSet):
-                if 'guid' in klv.data['by_format_ul']:
-                    header_klvs_hash[klv.i_guid.read()] = {'klv': klv, 'used': False}
+                if '\x3c\x0a' in klv.data:
+                    header_klvs_hash[klv.data['\x3c\x0a'].read()] = {'klv': klv, 'used': False}
 
         ### End of the parsing loop 1
 

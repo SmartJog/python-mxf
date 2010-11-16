@@ -309,10 +309,7 @@ class MXFDataSet(InterchangeObject):
         InterchangeObject.__init__(self, fdesc, debug)
         self.primer = primer
         self.dark = dark
-        self.data = {
-            'by_tag': OrderedDict(),
-            'by_format_ul': OrderedDict(),
-        }
+        self.data = OrderedDict()
         self.set_type = 'DataSet'
 
         if self.key.encode('hex_codec') not in MXFDataSet.dataset_names.keys():
@@ -336,23 +333,13 @@ class MXFDataSet(InterchangeObject):
         ret = ['<MXF' + self.set_type]
         ret += ['pos=%d' % self.pos]
         ret += ['size=%d' % self.length]
-        ret += ['InstanceUID=%s' % self.i_guid]
+        ret += ['InstanceUID=%s' % self.data['\x3c\x0a']]
         if self.debug:
-            ret += ['tags=%d:\n' % len(self.data['by_tag']) \
-                + '\n'.join(["%s: %s %d bytes" % (
-                    i.encode('hex_codec'),
-                    j.encode('hex_codec').ljust(64, ' ')[:64],
-                    len(j)
-                ) for i, j in self.data['by_tag'].items()])]
+            ret += ['tags=%d:\n' % len(self.data) \
+                + '\n'.join(["%s: %s" % (
+                    i.encode('hex_codec'), j
+                ) for i, j in self.data.items()])]
         return ' '.join(ret) + '>'
-
-    def __getattribute__(self, attr):
-        if attr.startswith('i_'):
-            data = object.__getattribute__(self, 'data')
-            if data and 'by_format_ul' in data and attr[2:] in data['by_format_ul']:
-                return data['by_format_ul'][attr[2:]]
-
-        return object.__getattribute__(self, attr)
 
     def read(self):
         """ Generic read method for sets and packs. """
@@ -369,9 +356,8 @@ class MXFDataSet(InterchangeObject):
             offset += set_size + 4
 
             cvalue = None
-            key_name = localtag.encode('hex_codec')
             try:
-                key_name, cvalue = self.primer.decode_from_local_tag(localtag, localdata)
+                _, cvalue = self.primer.decode_from_local_tag(localtag, localdata)
             except KeyError, _error:
                 print "Primer Pack is missing an entry for:", localtag.encode('hex_codec')
 
@@ -379,15 +365,14 @@ class MXFDataSet(InterchangeObject):
                 print "Could not convert to [data:%s] format %s" % (localdata.encode('hex_codec'), self.primer.data[localtag].encode('hex_codec'))
                 cvalue = "[data:%s]" % localdata.encode('hex_codec')
 
-            self.data['by_tag'].update({localtag: cvalue})
-            self.data['by_format_ul'].update({key_name: cvalue})
+            self.data.update({localtag: cvalue})
 
         return
 
     def write(self):
 
         ret = []
-        for tag, value in self.data['by_tag'].items():
+        for tag, value in self.data.items():
             # Not all values are decoded
             if isinstance(value, basestring):
                 localtag = tag
@@ -408,40 +393,42 @@ class MXFDataSet(InterchangeObject):
 
         print "%s%s" % (4 * indent * ' ', self)
 
-        for i, j in self.data['by_format_ul'].items():
+        for i, j in self.data.items():
 
-            if i == 'guid':
+            element_name = self.primer.get_mapping(i)[1][1]
+
+            if element_name == 'guid':
                 continue
 
             elif isinstance(j, Reference):
                 if j.subtype in ('AUID', 'PackageID'):
-                    print "%s%s: %s" % (4 * indent * ' ' + '  ', i, j)
+                    print "%s%s: %s" % (4 * indent * ' ' + '  ', element_name, j)
                 elif j.read() not in klv_hash:
-                    print "%s%s: broken reference, %s %s" % (4 * indent * ' ' + '  ', i, j, j.subtype)
+                    print "%s%s: broken reference, %s %s" % (4 * indent * ' ' + '  ', element_name, j, j.subtype)
                 elif not klv_hash[j.read()]['used']:
                     klv_hash[j.read()]['used'] = True
                     klv_hash[j.read()]['klv'].human_readable(klv_hash, indent+1)
                 else:
-                    print "%s%s: <-> %s" % (4 * indent * ' ' + '  ', i, j)
+                    print "%s%s: <-> %s" % (4 * indent * ' ' + '  ', element_name, j)
 
             elif isinstance(j, Array):
                 if j.subconv is Reference:
                     for k in j.read():
                         if j.subtype == 'AUID':
-                            print "%s%s: %s" % (4 * indent * ' ' + '  ', i, Reference(k))
+                            print "%s%s: %s" % (4 * indent * ' ' + '  ', element_name, Reference(k))
                         elif k not in klv_hash:
-                            print "%s%s: broken reference, %s" % (4 * indent * ' ' + '  ', i, Reference(k))
+                            print "%s%s: broken reference, %s" % (4 * indent * ' ' + '  ', element_name, Reference(k))
                         elif not klv_hash[k]['used']:
                             print ""
                             klv_hash[k]['used'] = True
                             klv_hash[k]['klv'].human_readable(klv_hash, indent+1)
                         else:
-                            print "%s%s: <-> %s" % (4 * indent * ' ' + '  ', i, Reference(k))
+                            print "%s%s: <-> %s" % (4 * indent * ' ' + '  ', element_name, Reference(k))
                 else:
                     for k in j.read():
-                        print "%s%s: %s" % (4 * indent * ' ' + '  ', i, k)
+                        print "%s%s: %s" % (4 * indent * ' ' + '  ', element_name, k)
             else:
-                print "%s%s: %s %s" % (4 * indent * ' ' + '  ', i, j, type(j))
+                print "%s%s: %s %s" % (4 * indent * ' ' + '  ', element_name, j, type(j))
 
         return klv_hash
 
