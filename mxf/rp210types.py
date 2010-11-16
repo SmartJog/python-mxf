@@ -308,7 +308,7 @@ class TimeStamp(Converter):
 class Integer(Converter):
     """ RP210 Integer converter. """
 
-    caps = re.compile(r'U?Int ?(8|16|32|64)', re.I)
+    caps = re.compile(r'^U?Int ?(8|16|32|64)', re.I)
 
     def __init__(self, value, match=None):
         Converter.__init__(self, value)
