@@ -6,7 +6,7 @@ import re
 
 from mxf.common import InterchangeObject, OrderedDict, Singleton
 from mxf.rp210 import RP210Exception, RP210
-from mxf.rp210types import Array, Reference, Integer
+from mxf.rp210types import Array, Reference, Integer, select_converter
 
 class S377MException(Exception):
     """ Raised on non SMPTE 377M input. """
@@ -49,24 +49,25 @@ class KLVDarkComponent(KLVFill):
 class MXFPartition(InterchangeObject):
     """ MXF Partition Pack parser. """
 
-    part_items = [
-        ('major_version',       2),
-        ('minor_version',       2),
-        ('kag_size',            4),
-        ('this_partition',      8),
-        ('previous_partition',  8),
-        ('footer_partition',    8),
-        ('header_byte_count',   8),
-        ('index_byte_cout',     8),
-        ('index_sid',           4),
-        ('body_offset',         8),
-        ('body_sid',            4),
-        ('operational_pattern', 16),
+    _compound = [
+        ('major_version',       'UInt16', 2),
+        ('minor_version',       'UInt16', 2),
+        ('kag_size',            'UInt32', 4),
+        ('this_partition',      'UInt64', 8),
+        ('previous_partition',  'UInt64', 8),
+        ('footer_partition',    'UInt64', 8),
+        ('header_byte_count',   'UInt64', 8),
+        ('index_byte_cout',     'UInt64', 8),
+        ('index_sid',           'UInt32', 4),
+        ('body_offset',         'UInt64', 8),
+        ('body_sid',            'UInt32', 4),
+        ('operational_pattern', 'Universal Label', 16),
+        #('essence_containers',  'Batch of Universal Labels', 8 + 16n),
     ]
 
     def __init__(self, fdesc, debug=False):
         InterchangeObject.__init__(self, fdesc, debug)
-        self.data = {'essence_containers': [], }
+        self.data = OrderedDict()
 
         if not re.search('060e2b34020501010d01020101(0[2-4])(0[0-4])00', self.key.encode('hex_codec')):
             raise S377MException('Not a valid Partition Pack key: %s' % self.key.encode('hex_codec'))
@@ -82,16 +83,16 @@ class MXFPartition(InterchangeObject):
     def __smtpe_377m_check(self):
         """ Check conformance to SMTPE 377M 2004. """
 
-        if self.data['major_version'].encode('hex_codec') != '0001':
+        if self.data['major_version'] != 1:
             raise S377MException('Invalid Major version for Partition Pack')
-        if self.data['minor_version'].encode('hex_codec') not in ('0002', '0003'):
+        if self.data['minor_version'] not in (2, 3):
             raise S377MException('Invalid Minor version for Partition Pack')
 
         # Header Partition Pack checks
         if self.key[14] == '\x02':
-            if self.data['this_partition'] != 8 * '\x00':
+            if self.data['this_partition'] != 0:
                 raise S377MException('Invalid value for ThisPartition in Header Partition Pack')
-            if self.data['previous_partition'] != 8 * '\x00':
+            if self.data['previous_partition'] != 0:
                 raise S377MException('Invalid value for PreviousPartition in Header Partition Pack')
         # partition_info['operational_pattern'][13] -> 10h –7Fh specialized pattern
 
@@ -100,7 +101,7 @@ class MXFPartition(InterchangeObject):
             if not ord(self.key[14]) & 0xfe:
                 raise S377MException('Open Footer Partition is not allowed')
 
-        if len(self.data['essence_containers']) == 0 and self.data['body_sid'] != 4 * '\x00':
+        if len(self.data['essence_containers']) == 0 and self.data['body_sid'] != 0:
             raise S377MException('Invalid value for BodySID in Partition Pack')
 
     def read(self):
@@ -108,12 +109,13 @@ class MXFPartition(InterchangeObject):
         data = self.fdesc.read(self.length)
 
         # Read Partition Pack items
-        for pp_item, pp_item_size in self.part_items:
-            self.data[pp_item] = data[idx:idx+pp_item_size]
-            idx += pp_item_size
+        for pp_item, pp_type, pp_size in self._compound:
+            conv = select_converter(pp_type)
+            self.data[pp_item] = conv(data[idx:idx+pp_size], pp_type).read()
+            idx += pp_size
 
         # Read essence containers list, if any
-        self.data['essence_containers'] = Array(data[idx:], 'StrongReferenceArray').read()
+        self.data['essence_containers'] = Array(data[idx:], 'Batch of Universal Labels').read()
 
         self.__smtpe_377m_check()
 
@@ -124,10 +126,11 @@ class MXFPartition(InterchangeObject):
 
     def write(self):
         ret = ""
-        for pp_item, _ in self.part_items:
-            ret += self.data[pp_item]
+        for pp_item, pp_type, _ in self._compound:
+            conv = select_converter(pp_type)
+            ret += conv(self.data[pp_item], pp_type).write()
 
-        ret += Array(self.data['essence_containers'], 'StrongReferenceArray').write()
+        ret += Array(self.data['essence_containers'], 'Batch of Universal Labels').write()
 
         self.fdesc.write(self.key + self.ber_encode_length(len(ret), bytes_num=8).decode('hex_codec') + ret)
         return
@@ -136,9 +139,11 @@ class MXFPartition(InterchangeObject):
         for key, item in self.data.items():
             if key == 'essence_containers':
                 for i, essence in enumerate(item):
-                    print "Essence %d: " % i, essence.read()
-            else:
+                    print "Essence %d: " % i, essence.encode('hex_codec')
+            elif key == 'operational_pattern':
                 print "%s: %s" % (key, item.encode('hex_codec'))
+            else:
+                print "%s: %s" % (key, item)
         return
 
 
