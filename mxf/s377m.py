@@ -315,6 +315,7 @@ class MXFDataSet(InterchangeObject):
         self.dark = dark
         self.data = OrderedDict()
         self.set_type = 'DataSet'
+        self.element_mapping = {}
 
         if self.key.encode('hex_codec') not in MXFDataSet.dataset_names.keys():
             #print "MXFDataSet is dark", self.key.encode('hex_codec')
@@ -345,6 +346,20 @@ class MXFDataSet(InterchangeObject):
                 ) for i, j in self.data.items()])]
         return ' '.join(ret) + '>'
 
+    def get_element(self, element_name):
+        return self.data.get(self.element_mapping.get(element_name, None), None)
+
+    def set_element(self, element_name, value):
+        self.data[self.element_mapping[element_name]] = value
+
+    def rm_element(self, element_name):
+        if self.element_mapping.get(element_name, None):
+            del self.data[self.element_mapping[element_name]]
+            del self.element_mapping[element_name]
+            return True
+
+        return False
+
     def read(self):
         """ Generic read method for sets and packs. """
 
@@ -359,16 +374,8 @@ class MXFDataSet(InterchangeObject):
             localdata = data[offset+4:offset+set_size+4]
             offset += set_size + 4
 
-            cvalue = None
-            try:
-                _, cvalue = self.primer.decode_from_local_tag(localtag, localdata)
-            except KeyError, _error:
-                print "Primer Pack is missing an entry for:", localtag.encode('hex_codec')
-
-            except RP210Exception, _error:
-                print "Could not convert to [data:%s] format %s" % (localdata.encode('hex_codec'), self.primer.data[localtag].encode('hex_codec'))
-                cvalue = "[data:%s]" % localdata.encode('hex_codec')
-
+            element_name, cvalue = self.primer.decode_from_local_tag(localtag, localdata)
+            self.element_mapping.update({element_name: localtag})
             self.data.update({localtag: cvalue})
 
         return
