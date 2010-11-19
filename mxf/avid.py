@@ -51,7 +51,9 @@ class AvidObjectDirectory(InterchangeObject):
         ret = Integer(len(self.data), 'UInt64').write() \
             + Integer(len(''.join(ret[0:3])), 'UInt8').write() \
             + ''.join(ret)
-        self.fdesc.write(self.key + self.ber_encode_length(len(ret), bytes_num=8).decode('hex_codec') + ret)
+
+        self.length = len(ret)
+        self.fdesc.write(self.key + self.ber_encode_length(self.length, bytes_num=8).decode('hex_codec') + ret)
         return
 
     def human_readable(self):
