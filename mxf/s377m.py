@@ -436,16 +436,21 @@ class MXFDataSet(InterchangeObject):
         for i, j in self.data.items():
 
             element_name = self.primer.get_mapping(i)[1][1]
+            if len(element_name) == 0:
+                element_name = self.primer.get_mapping(i)[1][2]
+
 
             if element_name == 'guid':
                 continue
 
             elif isinstance(j, Reference):
-                if j.subtype in ('AUID', 'PackageID'):
+                if j.subtype in ('AUID', 'PackageID', 'Universal Label'):
                     print "%s%s: %s" % (4 * indent * ' ' + '  ', element_name, j)
                 elif j.read() not in klv_hash:
                     print "%s%s: broken reference, %s %s" % (4 * indent * ' ' + '  ', element_name, j, j.subtype)
                 elif not klv_hash[j.read()]['used']:
+
+                    print "%s%s: New reference" % (4 * indent * ' ' + '  ', element_name)
                     klv_hash[j.read()]['used'] = True
                     klv_hash[j.read()]['klv'].human_readable(klv_hash, indent+1)
                 else:
@@ -453,23 +458,25 @@ class MXFDataSet(InterchangeObject):
 
             elif isinstance(j, Array):
                 if j.subconv is Reference:
-                    for k in j.read():
-                        if j.subtype == 'AUID':
-                            print "%s%s: %s" % (4 * indent * ' ' + '  ', element_name, Reference(k))
+                    print "%s%s: Array (%d items)" % (4 * indent * ' ' + '  ', element_name, len(j.read()))
+                    #print "%s" % (4 * indent * ' ' + '  '), [_.encode('hex_codec') for _ in j.read()]
+                    for x, k in enumerate(j.read()):
+                        if j.subtype in ('AUID', 'Universal Labels'):
+                            print "%sitem %d: %s" % (4 * indent * ' ' + '  ', x, Reference(k))
                         elif k not in klv_hash:
-                            print "%s%s: broken reference, %s" % (4 * indent * ' ' + '  ', element_name, Reference(k))
+                            print "%sitem %d: broken reference, %s" % (4 * indent * ' ' + '  ', x, Reference(k))
                         elif not klv_hash[k]['used']:
-                            print ""
                             klv_hash[k]['used'] = True
                             klv_hash[k]['klv'].human_readable(klv_hash, indent+1)
                         else:
-                            print "%s%s: <-> %s" % (4 * indent * ' ' + '  ', element_name, Reference(k))
+                            print "%sitem %d: <-> %s" % (4 * indent * ' ' + '  ', x, Reference(k))
                 else:
                     for k in j.read():
                         print "%s%s: %s" % (4 * indent * ' ' + '  ', element_name, k)
             else:
                 print "%s%s: %s %s" % (4 * indent * ' ' + '  ', element_name, j, type(j))
 
+        print ""
         return klv_hash
 
 
