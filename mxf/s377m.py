@@ -462,8 +462,8 @@ class RandomIndexMetadata(InterchangeObject):
 
         for _ in range(0, (self.length - 4) / 12):
             self.data['partition'].append({
-                'body_sid': data[idx:idx+4],
-                'byte_offset': data[idx+4:idx+12],
+                'body_sid': Integer(data[idx:idx+4], 'UInt32').read(),
+                'byte_offset': Integer(data[idx+4:idx+12], 'UInt64').read(),
             })
             idx += 12
 
@@ -476,7 +476,7 @@ class RandomIndexMetadata(InterchangeObject):
     def write(self):
         ret = ""
         for partition in self.data['partition']:
-            ret += partition['body_sid'] + partition['byte_offset']
+            ret += Integer(partition['body_sid'], 'UInt32').write() + Integer(partition['byte_offset'], 'UInt64').write()
 
         total_part_length = Integer(16 + 9 + 4 + len(ret), 'UInt32').write()
 
