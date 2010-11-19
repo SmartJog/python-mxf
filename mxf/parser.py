@@ -12,10 +12,11 @@ SMPTE_PARTITION_PACK_LABEL = '060e2b34020501010d010201'
 # FIXME: this is actually an avid OP parser
 class MXFParser(object):
 
-    def __init__(self, filename):
+    def __init__(self, filename, debug=False):
         self.filename = filename
         self.fd = None
         self.data = None
+        self.debug = debug
 
     def open(self):
         # SMTPE 377M: ability to skip over RunIn sequence
@@ -262,4 +263,65 @@ class MXFParser(object):
             },
         }
         return self.data
+
+    def write(self):
+
+        fd = open(self.filename, 'w')
+
+        for part in ('header', 'body', 'footer'):
+            if len(self.data[part]) == 0:
+                print "part", part, "is empty"
+                continue
+
+            print "Writing part:", part
+            value = self.data[part]['partition']
+            value.fdesc = fd
+            value.write()
+
+            value = self.data[part]['klvs']
+            object_directory = []
+            for item in value:
+                item.fdesc = fd
+
+                # Build AvidObjectDirectory update
+                if hasattr(item, 'get_element'):
+                    object_directory.append((item.get_element('guid').read(), item.pos, 0))
+
+                if isinstance(item, AvidObjectDirectory):
+                    item.data = object_directory
+
+                item.write()
+
+        # Update Header
+        fd.seek(0)
+        self.data['header']['partition'].data['footer_partition'] = self.data['footer']['partition'].pos
+#        self.data['header']['partition'].data['header_byte_count'] = self.data['footer']['partition'].pos - (self.data['header']['partition'].length + 16 + 9)
+#
+#        if isinstance(self.data['header']['klvs'][0], KLVFill):
+#            print "First KLVFill", self.data['header']['klvs'][0].length
+#            self.data['header']['partition'].data['header_byte_count'] -= (self.data['header']['klvs'][0].length + 16 + 9)
+
+        self.data['header']['partition'].data['header_byte_count'] = sum(16 + 9 + klv.length for klv in self.data['header']['klvs'][1:])
+        self.data['header']['partition'].write()
+
+        # Update Footer
+        fd.seek(self.data['footer']['partition'].pos)
+        self.data['footer']['partition'].data['footer_partition'] = self.data['footer']['partition'].pos
+        self.data['footer']['partition'].data['this_partition'] = self.data['footer']['partition'].pos
+        self.data['footer']['partition'].write()
+
+        # Update Random Index Pack
+        # No need to seek after footer write
+        self.data['footer']['random_index_pack'].data['partition'] = [
+            {'body_sid': 0, 'byte_offset': self.data['header']['partition'].pos},
+            {'body_sid': 1, 'byte_offset': self.data['footer']['partition'].pos},
+        ]
+        self.data['footer']['random_index_pack'].write()
+
+        if self.debug:
+            print "Sum of header klv length:", sum(klv.length for klv in self.data['header']['klvs']) + self.data['header']['partition'].length
+            print "Footer position:", self.data['footer']['partition'].pos
+
+        fd.truncate(fd.tell())
+
 
