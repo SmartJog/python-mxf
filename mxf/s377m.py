@@ -360,6 +360,16 @@ class MXFDataSet(InterchangeObject):
 
         return False
 
+    def get_strong_references(self):
+        ref_list = []
+        for _, j in self.data.items():
+            if isinstance(j, Reference) and j.subtype == 'StrongReference':
+                ref_list.append(j.read())
+            elif isinstance(j, Array) and j.subtype == 'StrongReference':
+                [ref_list.append(k) for k in j.read()]
+
+        return ref_list
+
     def read(self):
         """ Generic read method for sets and packs. """
 
