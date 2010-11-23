@@ -4,12 +4,29 @@
 """ MXF Parser. """
 
 from mxf.common import InterchangeObject
-from mxf.s377m import MXFPartition, MXFDataSet, MXFPreface, MXFPrimer, KLVFill, KLVDarkComponent, RandomIndexMetadata
+from mxf.s377m import MXFPartition, MXFDataSet, MXFPreface, MXFPrimer, KLVFill, KLVDarkComponent, RandomIndexMetadata, S377MException
 from mxf.avid import AvidObjectDirectory, AvidAAFDefinition, AvidMetadataPreface, AvidMXFDataSet
 
 SMPTE_PARTITION_PACK_LABEL = '060e2b34020501010d010201'
 
-# FIXME: this is actually an avid OP parser
+def mxf_kind(filename):
+    """ Lookup the MXF data start position and returns appropriate parser. """
+
+    mxf = MXFParser(filename)
+    mxf.open()
+
+    # SMTPE 377M: Header Partition Pack, first thing in a MXF file
+    header_partition_pack = MXFPartition(mxf.fd)
+    try:
+        header_partition_pack.read()
+    except S377MException, error:
+        print error
+
+    print "Selecting", str(PARSERS[header_partition_pack.data['operational_pattern'].encode('hex_codec')])
+
+    return PARSERS[header_partition_pack.data['operational_pattern'].encode('hex_codec')](filename)
+
+
 class MXFParser(object):
 
     def __init__(self, filename, debug=False):
@@ -324,4 +341,7 @@ class MXFParser(object):
 
         fd.truncate(fd.tell())
 
+
+PARSERS = {
+}
 
