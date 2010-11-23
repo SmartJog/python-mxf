@@ -7,7 +7,7 @@ from mxf.common import InterchangeObject
 from datetime import datetime
 import re
 
-CONVERTERS = ['Reference', 'Version', 'Integer', 'Boolean', 'TimeStamp', 'String', 'Rational', 'Length', 'Array', 'VariableArray', 'AvidOffset', 'AvidVersion']
+CONVERTERS = ['Reference', 'Version', 'Integer', 'Boolean', 'TimeStamp', 'String', 'Rational', 'Length', 'Array', 'VariableArray', 'AvidOffset', 'AvidVersion', 'XID']
 
 def select_converter(vtype):
     """ Select converter according to @vtype. """
@@ -333,6 +333,15 @@ class Length(Integer):
 
     def __init__(self, value, _match=None):
         Integer.__init__(self, value, 'Int64')
+
+
+class XID(Integer):
+    """ RP210 x ID converter. """
+
+    caps = re.compile('Track ?ID')
+
+    def __init__(self, value, _match=None):
+        Integer.__init__(self, value, 'Int32')
 
 
 class Rational(Converter):
