@@ -321,7 +321,10 @@ class MXFDataSet(InterchangeObject):
 
          '060e2b34025301010d01010101014200': 'GenericSoundEssenceDescriptor',
          '060e2b34025301010d01010101014400': 'MultipleDescriptor',
+         '060e2b34025301010d01010101014700': 'AES3PCMDescriptor',
          '060e2b34025301010d01010101014800': 'WaveAudioDescriptor',
+
+         '060e2b34025301010d01010101015100': 'MPEG2VideoDescriptor',
     }
 
     def __init__(self, fdesc, primer, debug=False, dark=False):
