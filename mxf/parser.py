@@ -62,13 +62,22 @@ class AvidParser(MXFParser):
 
         header_klvs = []
         header_klvs_hash = {}
+
+        # SMPTE 377M: klv fill behind Header Partition is not counted in HeaderByteCount
+        key = InterchangeObject.get_key(self.fd)
+        if key in ('060e2b34010101010201021001000000', \
+            '060e2b34010101010301021001000000'):
+            # KLV Fill item
+            klv = KLVFill(self.fd)
+            klv.read()
+
         header_end = self.fd.tell() + header_partition_pack.data['header_byte_count']
 
         header_metadata_preface = None
         avid_metadata_preface = None
         dark = 0
 
-        while self.fd.tell() <= header_end:
+        while self.fd.tell() < header_end:
             fd = self.fd
             key = InterchangeObject.get_key(self.fd)
 
