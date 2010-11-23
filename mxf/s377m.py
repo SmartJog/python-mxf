@@ -250,16 +250,19 @@ class MXFPrimer(InterchangeObject):
         evalue = value.encode('hex_codec')
 
         if tag not in self.data.keys():
-            return "Error: Local key '%s' not found in primer" % etag
+            print "Error: Local key '%s' not found in primer" % etag
+            return etag, evalue
 
         #if not self.data[tag].startswith('060e2b34'.decode('hex_codec')):
         #    return "Error: '%s' does not map to a SMPTE format UL '%s'" % (etag, self.data[tag].encode('hex_codec'))
 
-        key = self.rp210.get_triplet_from_format_ul(self.data[tag])[1]
+        key = "unkown_data_format"
         # SMTPE RP 210 conversion
         try:
+            key = self.rp210.get_triplet_from_format_ul(self.data[tag])[1]
             return key, self.rp210.convert(self.data[tag], value)
-        except RP210Exception:
+        except RP210Exception, error:
+            print error
             return key, evalue
 
     def encode_from_local_tag(self, tag, value):
@@ -279,8 +282,16 @@ class MXFPrimer(InterchangeObject):
     def get_mapping(self, tag):
         """ Shows Primer/RP210 mapping for @tag local tag. """
 
-        format_ul = self.data[tag]
-        return format_ul, self.rp210.get_triplet_from_format_ul(format_ul)
+        try:
+            format_ul = self.data[tag]
+        except KeyError:
+            return tag, ('unkown_tag', 'unknown_data_format', '')
+
+        try:
+            return format_ul, self.rp210.get_triplet_from_format_ul(format_ul)
+        except RP210Exception, error:
+            print error
+            return format_ul, ('unknown_type', 'unknown_data_format', '')
 
 
 class MXFDataSet(InterchangeObject):
