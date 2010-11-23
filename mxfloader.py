@@ -5,13 +5,14 @@
 
 VERSION = "@VERSION@"
 
-from mxf.parser import MXFParser
+from mxf.parser import mxf_kind
+
 import optparse
 
 def main(filename):
     """ Parse MXF file. """
 
-    parser = MXFParser(filename)
+    parser = mxf_kind(filename)
     structure = parser.read()
     parser.close()
 

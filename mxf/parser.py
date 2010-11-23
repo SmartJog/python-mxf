@@ -49,6 +49,9 @@ class MXFParser(object):
     def close(self):
         self.fd.close()
 
+
+class AvidParser(MXFParser):
+
     def read(self):
         if not self.fd:
             self.open()
@@ -342,6 +345,221 @@ class MXFParser(object):
         fd.truncate(fd.tell())
 
 
+class OP1aParser(MXFParser):
+
+    def read(self):
+        if not self.fd:
+            self.open()
+
+        # SMTPE 377M: Header Partition Pack, first thing in a MXF file
+        header_partition_pack = MXFPartition(self.fd)
+        try:
+            header_partition_pack.read()
+        except S377MException, error:
+            print error
+
+        header_klvs = []
+        header_klvs_hash = {}
+
+        header_metadata_preface = None
+        dark = 0
+
+        # SMPTE 377M: klv fill behind Header Partition is not counted in HeaderByteCount
+        key = InterchangeObject.get_key(self.fd)
+        if key in ('060e2b34010101010201021001000000', \
+            '060e2b34010101010301021001000000'):
+            # KLV Fill item
+            klv = KLVFill(self.fd)
+            klv.read()
+
+        header_end = self.fd.tell() + header_partition_pack.data['header_byte_count']
+
+        while self.fd.tell() <= header_end:
+            fd = self.fd
+            key = InterchangeObject.get_key(self.fd)
+
+            if key in ('060e2b34010101010201021001000000', \
+                '060e2b34010101010301021001000000'):
+                # KLV Fill item
+                klv = KLVFill(fd)
+                klv.read()
+
+            elif key == '060e2b34020501010d01020101050100':
+                # SMTPE 377M: Header Metadata (Primer Pack)
+                #if not isinstance(header_klvs[-1], KLVFill) and \
+                #    not isinstance(header_klvs[-1], MXFPartition):
+                #    raise Exception('Error: MXFPrimer not located after Header Partition Pack')
+                header_metadata_primer_pack = MXFPrimer(fd, debug=True)
+                header_metadata_primer_pack.read()
+                print header_metadata_primer_pack
+                klv = header_metadata_primer_pack
+
+            elif key == '060e2b34025301010d01010101012f00':
+                # SMTPE 377M: Header Metadata (Preface)
+                #if not isinstance(header_klvs[-1], KLVFill) and \
+                #    not isinstance(header_klvs[-1], MXFPrimer):
+                #    raise Exception('Error: MXFPrimer not located after Header Partition Pack')
+                header_metadata_preface = MXFPreface(fd, header_metadata_primer_pack)
+                header_metadata_preface.read()
+                klv = header_metadata_preface
+
+            elif key in (
+             # essence descriptions (130~180)
+             # SMPTE 377M: Strutural Metadata Sets
+             '060e2b34025301010d01010101010900', # Filler
+
+             '060e2b34025301010d01010101010f00', # Sequence
+
+             '060e2b34025301010d01010101011100', # Source Clip
+             '060e2b34025301010d01010101011400', # Timecode Component
+
+             '060e2b34025301010d01010101011800', # ContentStorage
+
+             '060e2b34025301010d01010101013000', # Identification
+             '060e2b34025301010d01010101013700', # Source Package (File, Physical)
+             '060e2b34025301010d01010101013600', # Material Package
+             '060e2b34025301010d01010101013b00', # Timeline Track
+
+             '060e2b34025301010d01010101012300', # EssenceContainerData
+             '060e2b34025301010d01010101012800', # CDCI Essence Descriptor
+             '060e2b34025301010d01010101014200', # GenericSoundEssenceDescriptor
+             '060e2b34025301010d01010101014400', # MultipleDescriptor
+             '060e2b34025301010d01010101014700', # AES3PCMDescriptor
+             '060e2b34025301010d01010101014800', # WaveAudioDescriptor
+             '060e2b34025301010d01010101015100', # MPEG2VideoDescriptor
+             ):
+                klv = MXFDataSet(fd, header_metadata_primer_pack)
+                klv.read()
+
+            else:
+                klv = KLVDarkComponent(fd)
+                klv.read()
+                dark += 1
+                print klv
+
+            header_klvs.append(klv)
+            if isinstance(klv, MXFDataSet) or isinstance(klv, MXFPreface):
+                if '\x3c\x0a' in klv.data:
+                    header_klvs_hash[klv.data['\x3c\x0a'].read()] = {'klv': klv, 'used': False}
+
+        ### End of the parsing loop 1
+
+        print "Loaded ", len(header_klvs), "KLVs", self.fd.tell()
+        print "Referenced ", len(header_klvs_hash), "KLVs"
+        print "Skipped", dark, "dark KLVs"
+
+        i = 0
+        while not InterchangeObject.get_key(self.fd).startswith('060e2b34020501010d01020101040400'):
+
+            if InterchangeObject.get_key(self.fd) == '060e2b34025301010d01010101012800':
+                print "FOUND CDCI IN A PLACE NOT EXPECTED"
+
+            klv = KLVDarkComponent(fd)
+            klv.read()
+            i += 1
+
+        print "Skipped", i, "KLVs"
+
+        ### End of the parsing loop 2
+
+        footer_klvs = []
+
+        # SMTPE 377M: Footer Partition Pack
+        if InterchangeObject.get_key(self.fd) != '060e2b34020501010d01020101040400':
+            raise Exception('Invalid Footer Partition Pack key: %s' % InterchangeObject.get_key(self.fd))
+
+        footer_partition_pack = MXFPartition(fd)
+        try:
+            footer_partition_pack.read()
+        except S377MException, error:
+            print error
+        print footer_partition_pack
+
+        # Read file's end
+        key = InterchangeObject.get_key(self.fd)
+        while key != '060e2b34020501010d01020101110100':
+            fd = self.fd
+
+            if key in (
+             '060e2b34010101010201021001000000',
+             '060e2b34010101010301021001000000'
+            ):
+                # KLV Fill item
+                klv = KLVFill(fd)
+                klv.read()
+                footer_klvs.append(klv)
+                print ">>> Found KLVFill"
+
+            else:
+                # 060e2b34025301010d01020101100100 -> Index Table Segment
+                klv = KLVDarkComponent(fd)
+                klv.read()
+                print klv
+
+            key = InterchangeObject.get_key(self.fd)
+
+        # SMTPE 377M: Random Index Pack (optional after Footer Partition)
+        if key != '060e2b34020501010d01020101110100':
+            raise Exception('Invalid RandomIndexMetadata key: %s' % InterchangeObject.get_key(self.fd))
+        random_index_pack = RandomIndexMetadata(fd)
+        random_index_pack.read()
+        footer_klvs.append(random_index_pack)
+        print ">>> RIP", random_index_pack
+
+
+        ### End of the parsing ###
+
+
+        # Header Partition Pack
+        # Fill (opt)
+        # Primer
+        # Fill (opt)
+        # Avid Sets/Packs (OP avid ?)
+        # Preface
+        # Header Metadata
+        # Avid Object Directory (OP avid ?)
+        # Footer Partition Pack
+        # Random Index Pack
+
+        ### Print out
+
+        print "KLVs left:", len(header_klvs_hash)
+        print "<=============================================================>"
+
+        header_klvs_hash = header_metadata_preface.human_readable(header_klvs_hash)
+
+        print ""
+        print "KLVs left:", len(header_klvs_hash)
+        print "<=============================================================>"
+
+        # Below are some dark metadata
+        header_partition_pack.human_readable()
+
+        print "<=============================================================>"
+        for _, klv in header_klvs_hash.items():
+            if not klv['used']:
+                print klv
+                klv['klv'].human_readable(header_klvs_hash, indent=1)
+
+        self.data = {
+            'header': {
+                'partition': header_partition_pack,
+                'primer': header_metadata_primer_pack,
+                'preface': header_metadata_preface,
+                'klvs': header_klvs,
+            },
+            'body': {},
+            'footer': {
+                'partition': footer_partition_pack,
+                'random_index_pack': random_index_pack,
+                'klvs': footer_klvs,
+            },
+        }
+        return self.data
+
+
 PARSERS = {
+    '060e2b34040101030e04020110000000': AvidParser,
+    '060e2b34040101010d01020101010900': OP1aParser,
 }
 
