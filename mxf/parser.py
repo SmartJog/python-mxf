@@ -24,7 +24,7 @@ def mxf_kind(filename):
 
     print "Selecting", str(PARSERS[header_partition_pack.data['operational_pattern'].encode('hex_codec')])
 
-    return PARSERS[header_partition_pack.data['operational_pattern'].encode('hex_codec')](filename)
+    return PARSERS[header_partition_pack.data['operational_pattern'].encode('hex_codec')](filename, debug=True)
 
 
 class MXFParser(object):
@@ -204,10 +204,14 @@ class AvidParser(MXFParser):
         print "Skipped", dark, "dark KLVs"
 
         i = 0
-        while not InterchangeObject.get_key(self.fd).startswith('060e2b34020501010d01020101040400'):
+        key = InterchangeObject.get_key(self.fd)
+        while not key.startswith('060e2b34020501010d01020101040400'):
+
             klv = KLVDarkComponent(fd)
             klv.read()
             i += 1
+            key = InterchangeObject.get_key(self.fd)
+            print klv
 
         print "Skipped", i, "KLVs"
 
