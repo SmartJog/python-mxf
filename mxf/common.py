@@ -140,17 +140,17 @@ class Singleton(object):
 
         self._sclass = sclass
 
-    def __getattr__(self, attribute):
+    def __getattribute__(self, attribute):
         """ Delegate access to implementation.
 
         @param self The object pointer.
         @param attr Attribute wanted.
         @return Attribute
         """
-        if attribute == '_sclass':
-            return object.__getattr__(self, '_sclass')
+        if attribute in ('_sclass', '_instance'):
+            return object.__getattribute__(self, attribute)
         else:
-            return getattr(self._instance[self._sclass], attribute)
+            return object.__getattribute__(self._instance[self._sclass], attribute)
 
     def __setattr__(self, attribute, value):
         """ Delegate access to implementation.
@@ -163,7 +163,7 @@ class Singleton(object):
         if attribute == '_sclass':
             return object.__setattr__(self, attribute, value)
         else:
-            return setattr(self._instance[self._sclass], attribute, value)
+            return object.__setattr__(self._instance[self._sclass], attribute, value)
 
 
 ################################################################################
