@@ -32,7 +32,22 @@ class MXFParser(object):
     def __init__(self, filename, debug=False):
         self.filename = filename
         self.fd = None
-        self.data = None
+        self.data = {
+            'header': {
+                'partition': None,
+                'primer': None,
+                'preface': None,
+                'klvs': [],
+            },
+            'body': {
+                'partition': None
+            },
+            'footer': {
+                'partition': None,
+                'random_index_pack': None,
+                'klvs': [],
+            },
+        }
         self.debug = debug
 
     def open(self):
@@ -49,19 +64,31 @@ class MXFParser(object):
     def close(self):
         self.fd.close()
 
-
-class AvidParser(MXFParser):
-
     def read(self):
         if not self.fd:
             self.open()
 
+        self.header_partition_parse()
+        self.header_metadata_parse()
+
+        ### Print out
+        if self.debug:
+            self.header_dump()
+            self.primer_statistics()
+
+        # Continue parsing
+        self.body_parse()
+        self.footer_partition_parse()
+        self.footer_extra_parse()
+        return self.data
+
+    def header_partition_parse(self):
+        """ Parse MXF header partition. """
+
         # SMTPE 377M: Header Partition Pack, first thing in a MXF file
         header_partition_pack = MXFPartition(self.fd)
         header_partition_pack.read()
-
-        header_klvs = []
-        header_klvs_hash = {}
+        self.data['header']['partition'] = header_partition_pack
 
         # SMPTE 377M: klv fill behind Header Partition is not counted in HeaderByteCount
         key = InterchangeObject.get_key(self.fd)
@@ -70,12 +97,124 @@ class AvidParser(MXFParser):
             # KLV Fill item
             klv = KLVFill(self.fd)
             klv.read()
+            self.data['header']['klvs'].append(klv)
 
-        header_end = self.fd.tell() + header_partition_pack.data['header_byte_count']
+    def header_metadata_parse(self):
+        raise Exception('To be implemented in specific Operational Pattern Parser')
 
-        header_metadata_preface = None
-        avid_metadata_preface = None
+    def body_parse(self):
+
+        # Read until Footer Partition Pack key
+        i = 0
+        key = InterchangeObject.get_key(self.fd)
+        while not key.startswith('060e2b34020501010d01020101040400'):
+
+            klv = KLVDarkComponent(self.fd)
+            klv.read()
+            i += 1
+            key = InterchangeObject.get_key(self.fd)
+            print klv
+
+        print "Skipped", i, "KLVs"
+
+    def footer_partition_parse(self):
+        """ Parse MXF footer partition. """
+
+        # SMTPE 377M: Footer Partition Pack
+        footer_partition_pack = MXFPartition(self.fd)
+        footer_partition_pack.read()
+        self.data['footer']['partition'] = footer_partition_pack
+
+        key = InterchangeObject.get_key(self.fd)
+        if key in ('060e2b34010101010201021001000000',
+            '060e2b34010101010301021001000000'):
+            # KLV Fill item
+            klv = KLVFill(self.fd)
+            klv.read()
+            self.data['footer']['klvs'].append(klv)
+
+    def footer_extra_parse(self):
+
+        # Read file's end
+        key = InterchangeObject.get_key(self.fd)
+        while key != '060e2b34020501010d01020101110100':
+
+            if key in (
+             '060e2b34010101010201021001000000',
+             '060e2b34010101010301021001000000'
+            ):
+                # KLV Fill item
+                klv = KLVFill(self.fd)
+                klv.read()
+
+            else:
+                # 060e2b34025301010d01020101100100 -> Index Table Segment
+                klv = KLVDarkComponent(self.fd)
+                klv.read()
+                print klv
+
+            self.data['footer']['klvs'].append(klv)
+
+            key = InterchangeObject.get_key(self.fd)
+
+        # SMTPE 377M: Random Index Pack (optional after Footer Partition)
+        if key != '060e2b34020501010d01020101110100':
+            raise Exception('Invalid RandomIndexMetadata key: %s' % InterchangeObject.get_key(self.fd))
+        random_index_pack = RandomIndexMetadata(self.fd)
+        random_index_pack.read()
+        self.data['footer']['klvs'].append(random_index_pack)
+        self.data['footer']['random_index_pack'] = random_index_pack
+
+    def primer_statistics(self):
+        # Primer Pack stats
+        smpte377_transcodings = self.data['header']['primer'].data.values()
+        smpte377_transcodings.sort()
+        custom_encoding = 0
+        for item in smpte377_transcodings:
+            if not item.startswith('060e2b34'.decode('hex_codec')):
+                custom_encoding += 1
+
+        print "Custom encodings:", custom_encoding
+
+    def header_dump(self):
+        header_klvs_hash = {}
+
+        for klv in self.data['header']['klvs']:
+            if isinstance(klv, MXFDataSet):
+                if '\x3c\x0a' in klv.data:
+                    header_klvs_hash[klv.data['\x3c\x0a'].read()] = {'klv': klv, 'used': False}
+
+        print "KLVs left:", len([klv for klv in header_klvs_hash.values() if not klv['used']])
+        print "<=============================================================>"
+
+        if 'avid_preface' in self.data['header']:
+            header_klvs_hash = self.data['header']['avid_preface'].human_readable(header_klvs_hash)
+        else:
+            header_klvs_hash = self.data['header']['preface'].human_readable(header_klvs_hash)
+
+        print ""
+        print "KLVs left:", len([klv for klv in header_klvs_hash.values() if not klv['used']])
+        print "<=============================================================>"
+        self.data['header']['partition'].human_readable()
+
+        # Below are some dark metadata
+        print "<=============================================================>"
+        for _, klv in header_klvs_hash.items():
+            if not klv['used']:
+                print klv
+                klv['klv'].human_readable(header_klvs_hash, indent=1)
+
+
+class AvidParser(MXFParser):
+
+
+    def header_metadata_parse(self):
+
         dark = 0
+
+        avid_metadata_preface = None
+        header_metadata_preface = None
+        header_end = self.fd.tell() + self.data['header']['partition'].data['header_byte_count']
 
         while self.fd.tell() < header_end:
             fd = self.fd
@@ -94,7 +233,7 @@ class AvidParser(MXFParser):
                 #    raise Exception('Error: MXFPrimer not located after Header Partition Pack')
                 header_metadata_primer_pack = MXFPrimer(fd, debug=True)
                 header_metadata_primer_pack.read()
-                print header_metadata_primer_pack
+                #print header_metadata_primer_pack
                 klv = header_metadata_primer_pack
                 #continue
 
@@ -192,117 +331,27 @@ class AvidParser(MXFParser):
                 klv.read()
                 dark += 1
 
-            header_klvs.append(klv)
-            if isinstance(klv, MXFDataSet):
-                if '\x3c\x0a' in klv.data:
-                    header_klvs_hash[klv.data['\x3c\x0a'].read()] = {'klv': klv, 'used': False}
+            self.data['header']['klvs'].append(klv)
 
         ### End of the parsing loop 1
 
-        print "Loaded ", len(header_klvs), "KLVs", self.fd.tell()
-        print "Referenced ", len(header_klvs_hash), "KLVs"
-        print "Skipped", dark, "dark KLVs"
+        if self.debug:
+            print "Loaded ", len(self.data['header']['klvs']), "KLVs", self.fd.tell()
+            print "Skipped", dark, "dark KLVs"
 
-        i = 0
-        key = InterchangeObject.get_key(self.fd)
-        while not key.startswith('060e2b34020501010d01020101040400'):
-
-            klv = KLVDarkComponent(fd)
-            klv.read()
-            i += 1
-            key = InterchangeObject.get_key(self.fd)
-            print klv
-
-        print "Skipped", i, "KLVs"
-
-        ### End of the parsing loop 2
-
-        footer_klvs = []
-
-        # SMTPE 377M: Footer Partition Pack
-        if InterchangeObject.get_key(self.fd) != '060e2b34020501010d01020101040400':
-            raise Exception('Invalid Footer Partition Pack key: %s' % InterchangeObject.get_key(self.fd))
-
-        footer_partition_pack = MXFPartition(fd)
-        footer_partition_pack.read()
-        print footer_partition_pack
-
-        if InterchangeObject.get_key(self.fd) in \
-            ('060e2b34010101010201021001000000', '060e2b34010101010301021001000000'):
-            # KLV Fill item
-            klv = KLVFill(fd)
-            klv.read()
-            footer_klvs.append(klv)
-            print ">>> Found KLVFill"
-            #print klv
-
-
-        # SMTPE 377M: Random Index Pack (optional after Footer Partition)
-        if InterchangeObject.get_key(self.fd) != '060e2b34020501010d01020101110100':
-            raise Exception('Invalid RandomIndexMetadata key: %s' % InterchangeObject.get_key(self.fd))
-        random_index_pack = RandomIndexMetadata(fd)
-        random_index_pack.read()
-        footer_klvs.append(random_index_pack)
-        print random_index_pack
-
-        ### End of the parsing ###
-
-        # Header Partition Pack
-        # Fill (opt)
-        # Primer
-        # Fill (opt)
-        # Avid Sets/Packs (OP avid ?)
-        # Preface
-        # Header Metadata
-        # Avid Object Directory (OP avid ?)
-        # Footer Partition Pack
-        # Random Index Pack
-
-        ### Printout
-
-        print "KLVs left:", len(header_klvs_hash)
-        print "<=============================================================>"
-
-        if avid_metadata_preface:
-            header_klvs_hash = avid_metadata_preface.human_readable(header_klvs_hash)
-        else:
-            header_klvs_hash = header_metadata_preface.human_readable(header_klvs_hash)
-
-        print ""
-        print "KLVs left:", len(header_klvs_hash)
-        print "<=============================================================>"
-        header_partition_pack.human_readable()
-
-        # Below are some dark metadata
-        print "<=============================================================>"
-        for _, klv in header_klvs_hash.items():
-            if not klv['used']:
-                print klv
-                klv['klv'].human_readable(header_klvs_hash, indent=1)
-
-        self.data = {
-            'header': {
-                'partition': header_partition_pack,
-                'primer': header_metadata_primer_pack,
-                'avid_preface': avid_metadata_preface,
-                'preface': header_metadata_preface,
-                'klvs': header_klvs,
-            },
-            'body': {},
-            'footer': {
-                'partition': footer_partition_pack,
-                'random_index_pack': random_index_pack,
-                'klvs': footer_klvs,
-            },
-        }
-        return self.data
+        self.data['header'].update({
+            'primer': header_metadata_primer_pack,
+            'preface': header_metadata_preface,
+            'avid_preface': avid_metadata_preface,
+        })
+        return
 
     def write(self):
 
         fd = open(self.filename, 'w')
 
         for part in ('header', 'body', 'footer'):
-            if len(self.data[part]) == 0:
+            if not self.data[part]['partition']:
                 print "part", part, "is empty"
                 continue
 
@@ -360,32 +409,11 @@ class AvidParser(MXFParser):
 
 class OP1aParser(MXFParser):
 
-    def read(self):
-        if not self.fd:
-            self.open()
+    def header_metadata_parse(self):
 
-        # SMTPE 377M: Header Partition Pack, first thing in a MXF file
-        header_partition_pack = MXFPartition(self.fd)
-        try:
-            header_partition_pack.read()
-        except S377MException, error:
-            print error
-
-        header_klvs = []
-        header_klvs_hash = {}
-
-        header_metadata_preface = None
         dark = 0
-
-        # SMPTE 377M: klv fill behind Header Partition is not counted in HeaderByteCount
-        key = InterchangeObject.get_key(self.fd)
-        if key in ('060e2b34010101010201021001000000', \
-            '060e2b34010101010301021001000000'):
-            # KLV Fill item
-            klv = KLVFill(self.fd)
-            klv.read()
-
-        header_end = self.fd.tell() + header_partition_pack.data['header_byte_count']
+        header_metadata_preface = None
+        header_end = self.fd.tell() + self.data['header']['partition'].data['header_byte_count']
 
         while self.fd.tell() <= header_end:
             fd = self.fd
@@ -448,127 +476,20 @@ class OP1aParser(MXFParser):
                 klv = KLVDarkComponent(fd)
                 klv.read()
                 dark += 1
-                print klv
 
-            header_klvs.append(klv)
-            if isinstance(klv, MXFDataSet) or isinstance(klv, MXFPreface):
-                if '\x3c\x0a' in klv.data:
-                    header_klvs_hash[klv.data['\x3c\x0a'].read()] = {'klv': klv, 'used': False}
+            self.data['header']['klvs'].append(klv)
 
         ### End of the parsing loop 1
 
-        print "Loaded ", len(header_klvs), "KLVs", self.fd.tell()
-        print "Referenced ", len(header_klvs_hash), "KLVs"
-        print "Skipped", dark, "dark KLVs"
+        if self.debug:
+            print "Loaded ", len(self.data['header']['klvs']), "KLVs", self.fd.tell()
+            print "Skipped", dark, "dark KLVs"
 
-        i = 0
-        while not InterchangeObject.get_key(self.fd).startswith('060e2b34020501010d01020101040400'):
-
-            if InterchangeObject.get_key(self.fd) == '060e2b34025301010d01010101012800':
-                print "FOUND CDCI IN A PLACE NOT EXPECTED"
-
-            klv = KLVDarkComponent(fd)
-            klv.read()
-            i += 1
-
-        print "Skipped", i, "KLVs"
-
-        ### End of the parsing loop 2
-
-        footer_klvs = []
-
-        # SMTPE 377M: Footer Partition Pack
-        if InterchangeObject.get_key(self.fd) != '060e2b34020501010d01020101040400':
-            raise Exception('Invalid Footer Partition Pack key: %s' % InterchangeObject.get_key(self.fd))
-
-        footer_partition_pack = MXFPartition(fd)
-        try:
-            footer_partition_pack.read()
-        except S377MException, error:
-            print error
-        print footer_partition_pack
-
-        # Read file's end
-        key = InterchangeObject.get_key(self.fd)
-        while key != '060e2b34020501010d01020101110100':
-            fd = self.fd
-
-            if key in (
-             '060e2b34010101010201021001000000',
-             '060e2b34010101010301021001000000'
-            ):
-                # KLV Fill item
-                klv = KLVFill(fd)
-                klv.read()
-                footer_klvs.append(klv)
-                print ">>> Found KLVFill"
-
-            else:
-                # 060e2b34025301010d01020101100100 -> Index Table Segment
-                klv = KLVDarkComponent(fd)
-                klv.read()
-                print klv
-
-            key = InterchangeObject.get_key(self.fd)
-
-        # SMTPE 377M: Random Index Pack (optional after Footer Partition)
-        if key != '060e2b34020501010d01020101110100':
-            raise Exception('Invalid RandomIndexMetadata key: %s' % InterchangeObject.get_key(self.fd))
-        random_index_pack = RandomIndexMetadata(fd)
-        random_index_pack.read()
-        footer_klvs.append(random_index_pack)
-        print ">>> RIP", random_index_pack
-
-
-        ### End of the parsing ###
-
-
-        # Header Partition Pack
-        # Fill (opt)
-        # Primer
-        # Fill (opt)
-        # Avid Sets/Packs (OP avid ?)
-        # Preface
-        # Header Metadata
-        # Avid Object Directory (OP avid ?)
-        # Footer Partition Pack
-        # Random Index Pack
-
-        ### Print out
-
-        print "KLVs left:", len(header_klvs_hash)
-        print "<=============================================================>"
-
-        header_klvs_hash = header_metadata_preface.human_readable(header_klvs_hash)
-
-        print ""
-        print "KLVs left:", len(header_klvs_hash)
-        print "<=============================================================>"
-
-        # Below are some dark metadata
-        header_partition_pack.human_readable()
-
-        print "<=============================================================>"
-        for _, klv in header_klvs_hash.items():
-            if not klv['used']:
-                print klv
-                klv['klv'].human_readable(header_klvs_hash, indent=1)
-
-        self.data = {
-            'header': {
-                'partition': header_partition_pack,
-                'primer': header_metadata_primer_pack,
-                'preface': header_metadata_preface,
-                'klvs': header_klvs,
-            },
-            'body': {},
-            'footer': {
-                'partition': footer_partition_pack,
-                'random_index_pack': random_index_pack,
-                'klvs': footer_klvs,
-            },
-        }
-        return self.data
+        self.data['header'].update({
+            'primer': header_metadata_primer_pack,
+            'preface': header_metadata_preface,
+        })
+        return
 
 
 PARSERS = {

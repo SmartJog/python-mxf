@@ -15,17 +15,6 @@ def main(filename):
     parser = mxf_kind(filename)
     structure = parser.read()
     parser.close()
-
-    # Primer Pack stats
-    smpte377_transcodings = structure['header']['primer'].data.values()
-    smpte377_transcodings.sort()
-    custom_encoding = 0
-    for item in smpte377_transcodings:
-        if not item.startswith('060e2b34'.decode('hex_codec')):
-            custom_encoding += 1
-
-    print "Custom encodings:", custom_encoding
-
     return
 
 
