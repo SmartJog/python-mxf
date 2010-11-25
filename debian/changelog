@@ -1,0 +1,5 @@
+python-mxf (0.1.0~dev-1) unstable; urgency=low
+
+  * Initial release, closes: #XXXX.
+
+ -- Gilles Dartiguelongue <gilles.dartiguelongue@smartjog.com>  Thu, 25 Nov 2010 12:00:23 +0100
