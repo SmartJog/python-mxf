@@ -89,7 +89,7 @@ class MXFPartition(InterchangeObject):
             raise S377MException('Invalid Minor version for Partition Pack')
 
         # Header Partition Pack checks
-        if self.key[14] == '\x02':
+        if self.key[13] == '\x02':
             if self.data['this_partition'] != 0:
                 raise S377MException('Invalid value for ThisPartition in Header Partition Pack')
             if self.data['previous_partition'] != 0:
@@ -97,7 +97,7 @@ class MXFPartition(InterchangeObject):
         # partition_info['operational_pattern'][13] -> 10h –7Fh specialized pattern
 
         # Footer Patition Pack checks
-        if self.key[14] == '\x04':
+        if self.key[13] == '\x04':
             if not ord(self.key[14]) & 0xfe:
                 raise S377MException('Open Footer Partition is not allowed')
 
