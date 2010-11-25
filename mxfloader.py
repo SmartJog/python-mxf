@@ -18,7 +18,10 @@ def main(filename):
         print "Could not parse", filename
         return
 
-    structure = parser.read()
+    parser.open()
+    parser.header_partition_parse()
+    parser.header_metadata_parse()
+    parser.header_dump()
     parser.close()
     return
 
