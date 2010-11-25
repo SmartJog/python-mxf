@@ -87,7 +87,10 @@ class MXFParser(object):
 
         # SMTPE 377M: Header Partition Pack, first thing in a MXF file
         header_partition_pack = MXFPartition(self.fd)
-        header_partition_pack.read()
+        try:
+            header_partition_pack.read()
+        except S377MException, error:
+            print error
         self.data['header']['partition'] = header_partition_pack
 
         # SMPTE 377M: klv fill behind Header Partition is not counted in HeaderByteCount
