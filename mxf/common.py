@@ -59,7 +59,7 @@ class InterchangeObject(object):
             consumed_bytes = bytes_num
         else:
             size = ord(size_string[0])
-            if size & 0x80:
+            if size & 0x80 and size & 0x7f < 10:
                 bytes_num = size & 0x7f
                 size_string = size_string[1:1+bytes_num].rjust(bytes_num, '\x00')
                 if bytes_num > 8:
