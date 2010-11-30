@@ -183,8 +183,9 @@ class Reference(Converter):
 
     caps = re.compile('(' + '|'.join([
         r'(Weak|Strong)Reference$',
+        r'Primary Package', # WeakReference
         r'As per ISO 11578 standard \(Annex A\)',
-        r'^Universal Label',
+        r'^(Universal Label|UL)',
         r'AUID$',
         r'UMID',
         r'UUID',
