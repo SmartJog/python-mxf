@@ -289,7 +289,10 @@ class TimeStamp(Converter):
             # SMTPE 337M: timestamp unknown
             return None
 
-        return datetime(ret[0], ret[1], ret[2], ret[3], ret[4], ret[5], ret[6])
+        try:
+            return datetime(ret[0], ret[1], ret[2], ret[3], ret[4], ret[5], ret[6])
+        except:
+            raise RP210TypesException('Invalid date format')
 
     def write(self):
         ret = []

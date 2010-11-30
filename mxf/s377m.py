@@ -6,7 +6,7 @@ import re
 
 from mxf.common import InterchangeObject, OrderedDict, Singleton
 from mxf.rp210 import RP210Exception, RP210
-from mxf.rp210types import Array, Reference, Integer, select_converter
+from mxf.rp210types import Array, Reference, Integer, select_converter, RP210TypesException
 
 class S377MException(Exception):
     """ Raised on non SMPTE 377M input. """
@@ -474,7 +474,10 @@ class MXFDataSet(InterchangeObject):
                     for k in j.read():
                         print "%s%s: %s" % (4 * indent * ' ' + '  ', element_name, k)
             else:
-                print "%s%s: %s %s" % (4 * indent * ' ' + '  ', element_name, j, type(j))
+                try:
+                    print "%s%s: %s %s" % (4 * indent * ' ' + '  ', element_name, j, type(j))
+                except RP210TypesException, error:
+                    print error
 
         print ""
         return klv_hash
