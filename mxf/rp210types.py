@@ -29,6 +29,11 @@ def select_converter(vtype):
     #print "Selecting", str(conv)
     return conv
 
+class RP210TypesException(Exception):
+
+    def __init__(self, message):
+        Exception.__init__(self, message)
+
 
 class Converter(object):
     """ Base class for RP210 type converters.
@@ -79,7 +84,7 @@ class Array(Converter, dict):
                 #print "Array Parser instance of type", match_type
                 break
         else:
-            raise Exception('No decoder for %s' % str(match.groups()))
+            raise RP210TypesException('No decoder for %s' % str(match.groups()))
 
     def __str__(self):
         vector = self.read()
