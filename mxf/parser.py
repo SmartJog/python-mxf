@@ -3,6 +3,7 @@
 
 """ MXF Parser. """
 
+import re
 from mxf.common import InterchangeObject
 from mxf.s377m import MXFPartition, MXFDataSet, MXFPreface, MXFPrimer, KLVFill, KLVDarkComponent, RandomIndexMetadata, S377MException
 from mxf.avid import AvidObjectDirectory, AvidAAFDefinition, AvidMetadataPreface, AvidMXFDataSet
@@ -22,9 +23,14 @@ def mxf_kind(filename):
     except S377MException, error:
         print error
 
-    print "Selecting", str(PARSERS[header_partition_pack.data['operational_pattern'].encode('hex_codec')])
+    op = header_partition_pack.data['operational_pattern'].encode('hex_codec')
+    for op_pattern, parser in PARSERS.items():
+        if re.match(op_pattern, op):
+            print "Selecting", str(parser)
+            return parser(filename, debug=True)
 
-    return PARSERS[header_partition_pack.data['operational_pattern'].encode('hex_codec')](filename, debug=True)
+    # This is an error
+    return None
 
 
 class MXFParser(object):
@@ -497,6 +503,6 @@ class OP1aParser(MXFParser):
 
 PARSERS = {
     '060e2b34040101030e04020110000000': AvidParser,
-    '060e2b34040101010d01020101010900': OP1aParser,
+    '060e2b34040101010d0102010101..00': OP1aParser,
 }
 

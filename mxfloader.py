@@ -13,6 +13,11 @@ def main(filename):
     """ Parse MXF file. """
 
     parser = mxf_kind(filename)
+
+    if not parser:
+        print "Could not parse", filename
+        return
+
     structure = parser.read()
     parser.close()
     return
