@@ -52,6 +52,7 @@ class AvidObjectDirectory(InterchangeObject):
             + Integer(len(''.join(ret[0:3])), 'UInt8').write() \
             + ''.join(ret)
 
+        self.pos = self.fdesc.tell()
         self.length = len(ret)
         self.fdesc.write(self.key + self.ber_encode_length(self.length, bytes_num=8).decode('hex_codec') + ret)
         return

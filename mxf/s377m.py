@@ -34,6 +34,7 @@ class KLVFill(InterchangeObject):
             self.data = self.fdesc.read(self.length)
 
     def write(self):
+        self.pos = self.fdesc.tell()
         self.length = len(self.data)
         self.fdesc.write(self.key + self.ber_encode_length(self.length, bytes_num=8).decode('hex_codec') + self.data)
 
@@ -239,6 +240,7 @@ class MXFPrimer(InterchangeObject):
         lt_item_size = Integer(len(ret) / len(self.data), 'UInt32').write()
         ret = lt_list_size + lt_item_size + ret
 
+        self.pos = self.fdesc.tell()
         self.length = len(ret)
         self.fdesc.write(self.key + self.ber_encode_length(self.length, bytes_num=8).decode('hex_codec') + ret)
         return
@@ -422,6 +424,7 @@ class MXFDataSet(InterchangeObject):
             ret.append(localtag + self.ber_encode_length(len(cvalue), bytes_num=2, prefix=False).decode('hex_codec') + cvalue)
 
         ret = ''.join(ret)
+        self.pos = self.fdesc.tell()
         self.length = len(ret)
         self.fdesc.write(self.key + self.ber_encode_length(self.length, bytes_num=8).decode('hex_codec') + ret)
         return
@@ -526,6 +529,7 @@ class RandomIndexMetadata(InterchangeObject):
 
         total_part_length = Integer(16 + 9 + 4 + len(ret), 'UInt32').write()
 
+        self.pos = self.fdesc.tell()
         self.length = len(ret) + 4
         self.fdesc.write(self.key + self.ber_encode_length(self.length, bytes_num=8).decode('hex_codec') + ret + total_part_length)
         return
