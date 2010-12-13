@@ -7,6 +7,7 @@ import re
 from mxf.common import InterchangeObject
 from mxf.s377m import MXFPartition, MXFDataSet, MXFPreface, MXFPrimer, KLVFill, KLVDarkComponent, RandomIndexMetadata, S377MException
 from mxf.avid import AvidObjectDirectory, AvidAAFDefinition, AvidMetadataPreface, AvidMXFDataSet
+from mxf.rp210types import AvidOffset
 
 SMPTE_PARTITION_PACK_LABEL = '060e2b34020501010d010201'
 
@@ -378,10 +379,21 @@ class AvidParser(MXFParser):
                 if hasattr(item, 'get_element'):
                     object_directory.append((item.get_element('guid').read(), item.pos, 0))
 
+                if isinstance(item, AvidMetadataPreface):
+                    avid_preface = item
+
                 if isinstance(item, AvidObjectDirectory):
                     item.data = object_directory
+                    avid_objdir = item
 
                 item.write()
+
+        # Update Avid Metadata Preface
+        fd.seek(avid_preface.pos)
+        avid_preface.set_element('object_directory',
+           AvidOffset(AvidOffset(int(avid_objdir.pos)).write())
+        )
+        avid_preface.write()
 
         # Update Header
         fd.seek(0)
