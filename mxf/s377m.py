@@ -449,9 +449,9 @@ class MXFDataSet(InterchangeObject):
             elif isinstance(j, Reference):
                 if j.subtype in ('AUID', 'PackageID', 'Universal Label'):
                     print "%s%s: %s" % (4 * indent * ' ' + '  ', element_name, j)
-                elif j.read() not in klv_hash:
+                elif klv_hash and j.read() not in klv_hash:
                     print "%s%s: broken reference, %s %s" % (4 * indent * ' ' + '  ', element_name, j, j.subtype)
-                elif not klv_hash[j.read()]['used']:
+                elif klv_hash and not klv_hash[j.read()]['used']:
 
                     print "%s%s: New reference" % (4 * indent * ' ' + '  ', element_name)
                     klv_hash[j.read()]['used'] = True
@@ -466,9 +466,9 @@ class MXFDataSet(InterchangeObject):
                     for x, k in enumerate(j.read()):
                         if j.subtype in ('AUID', 'Universal Labels'):
                             print "%sitem %d: %s" % (4 * indent * ' ' + '  ', x, Reference(k))
-                        elif k not in klv_hash:
+                        elif klv_hash and k not in klv_hash:
                             print "%sitem %d: broken reference, %s" % (4 * indent * ' ' + '  ', x, Reference(k))
-                        elif not klv_hash[k]['used']:
+                        elif klv_hash and not klv_hash[k]['used']:
                             klv_hash[k]['used'] = True
                             klv_hash[k]['klv'].human_readable(klv_hash, indent+1)
                         else:
@@ -483,7 +483,9 @@ class MXFDataSet(InterchangeObject):
                     print error
 
         print ""
-        return klv_hash
+        if klv_hash:
+            return klv_hash
+        return
 
 
 class MXFPreface(MXFDataSet):
