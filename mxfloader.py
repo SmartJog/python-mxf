@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+""" Small utility to parse MXF files and dump structure on standard output. """
+
 VERSION = "@VERSION@"
 
 from mxf.parser import MXFParser
