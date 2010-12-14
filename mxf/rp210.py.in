@@ -4,6 +4,7 @@
 """ Helper module to convert MXF data to python types according to SMPTE RP210. """
 
 import os
+import re
 import csv
 from pprint import pprint
 
@@ -60,8 +61,10 @@ class RP210(object):
         @return: PEP compatible class attribute string
         """
 
-        ret = vtype.lstrip().capitalize().replace(' ', '_')
-        return ret.lower()
+        return '_'.join([ \
+            '_'.join([cap.strip().capitalize() for cap in item.split() if cap.strip()]) \
+            for item in re.split(r'([A-Z][a-z]+)', vtype) if item.strip() \
+        ]).lower().replace(' ', '')
 
     def inject(self, extra_items):
         """ Insert new mappings in RP210. """
