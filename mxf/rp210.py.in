@@ -95,6 +95,19 @@ class RP210(object):
 
         return self.data[eul]
 
+    def get_triplet_from_key_name(self, key_name):
+        """ Returns format Universal Label for given @key_name. """
+
+        ful = None
+        for ful, item in self.data.items():
+            if item[1] == key_name:
+                break
+        else:
+            raise RP210Exception("key_name '%s' not found in %s." % (key_name, self.__class__))
+
+        return ful
+
+
     def convert(self, format_ul, value):
         """ Convert @value according to @format_ul type. """
 
