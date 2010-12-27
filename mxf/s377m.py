@@ -157,7 +157,6 @@ class MXFPrimer(InterchangeObject):
         if self.key and not re.search('060e2b34020501..0d01020101050100', self.key.encode('hex_codec')):
             raise S377MException('Not a valid Primer Pack key: %s' % self.key.encode('hex_codec'))
 
-
     def __str__(self):
         ret = ['<MXFPrimer']
         ret += ['pos=%d' % self.pos]
@@ -218,7 +217,7 @@ class MXFPrimer(InterchangeObject):
             idx += lt_item_size
 
         if self.debug:
-            print "%d local tag mappings of %d size in Primer Pack" % (lt_list_size, lt_item_size)
+            print "%d local tag mappings in Primer Pack" % len(self.data)
 
         return
 
@@ -242,7 +241,7 @@ class MXFPrimer(InterchangeObject):
         evalue = value.encode('hex_codec')
 
         if tag not in self.data.keys():
-            return "Error: Local key '%s' not found in primer (%s)" % (etag, evalue)
+            return "Error: Local key '%s' not found in primer" % etag
 
         #if not self.data[tag].startswith('060e2b34'.decode('hex_codec')):
         #    return "Error: '%s' does not map to a SMPTE format UL '%s'" % (etag, self.data[tag].encode('hex_codec'))
