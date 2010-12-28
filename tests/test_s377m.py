@@ -7,7 +7,7 @@ import os
 import sys
 import unittest
 
-from mxf import s377m
+from sjmxf import s377m
 
 
 def load_klv(filename, mxfobj, *args, **kwargs):

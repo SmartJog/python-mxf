@@ -3,7 +3,7 @@
 
 """ Set of classes to help convert RP210 defined types. """
 
-from mxf.common import InterchangeObject
+from sjmxf.common import InterchangeObject
 from datetime import datetime
 import re
 

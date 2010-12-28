@@ -8,7 +8,7 @@ import re
 import csv
 from pprint import pprint
 
-import mxf.rp210types
+import sjmxf.rp210types
 
 class RP210Exception(Exception):
     """ Raised on RP210 operation problem. """
@@ -106,8 +106,8 @@ class RP210(object):
 
         vtype, vname, _ = self.data[eul]
 
-        for conv_class in mxf.rp210types.CONVERTERS:
-            conv = getattr(mxf.rp210types, conv_class)
+        for conv_class in sjmxf.rp210types.CONVERTERS:
+            conv = getattr(sjmxf.rp210types, conv_class)
             if conv.caps:
                 if hasattr(conv.caps, 'search'):
                     if conv.caps.search(vtype):

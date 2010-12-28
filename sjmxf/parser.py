@@ -4,10 +4,10 @@
 """ MXF Parser. """
 
 import re
-from mxf.common import InterchangeObject
-from mxf.s377m import MXFPartition, MXFDataSet, MXFPreface, MXFPrimer, KLVFill, KLVDarkComponent, RandomIndexMetadata, S377MException
-from mxf.avid import AvidObjectDirectory, AvidAAFDefinition, AvidMetadataPreface, AvidMXFDataSet
-from mxf.rp210types import AvidOffset
+from sjmxf.common import InterchangeObject
+from sjmxf.s377m import MXFPartition, MXFDataSet, MXFPreface, MXFPrimer, KLVFill, KLVDarkComponent, RandomIndexMetadata, S377MException
+from sjmxf.avid import AvidObjectDirectory, AvidAAFDefinition, AvidMetadataPreface, AvidMXFDataSet
+from sjmxf.rp210types import AvidOffset
 
 SMPTE_PARTITION_PACK_LABEL = '060e2b34020501010d010201'
 

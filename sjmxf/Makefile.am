@@ -1,4 +1,4 @@
-mxfdir = $(pyexecdir)/mxf
+mxfdir = $(pyexecdir)/sjmxf
 mxf_PYTHON = \
 	__init__.py \
 	avid.py \
@@ -17,7 +17,7 @@ $(nodist_mxf_PYTHON): $(nodist_mxf_PYTHON:=.in) Makefile
 
 check-local:
 	-for item in $(wildcard $(srcdir)/*.py); do \
-		$(LN_S) $(srcdir)/$$item $(top_builddir)/mxf/ 2> /dev/null; \
+		$(LN_S) $(srcdir)/$$item $(top_builddir)/sjmxf/ 2> /dev/null; \
 	done
 
 BUILT_SOURCES = $(nodist_mxf_PYTHON)

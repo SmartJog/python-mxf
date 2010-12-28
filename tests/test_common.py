@@ -6,7 +6,7 @@
 import sys
 import unittest
 
-from mxf.common import InterchangeObject
+from sjmxf.common import InterchangeObject
 
 
 class InterchangeObjectTest(unittest.TestCase):

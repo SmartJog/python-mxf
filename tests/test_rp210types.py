@@ -7,7 +7,7 @@ import sys
 import unittest
 from datetime import datetime
 
-import mxf.rp210types as conv
+import sjmxf.rp210types as conv
 
 
 class RP210TypesSymetricTest(unittest.TestCase):

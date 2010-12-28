@@ -10,7 +10,7 @@ AC_PROG_LN_S
 
 AC_CONFIG_FILES([
     Makefile
-    mxf/Makefile
+    sjmxf/Makefile
     data/Makefile
     tests/Makefile
 ])

@@ -4,9 +4,9 @@
 
 import re
 
-from mxf.common import InterchangeObject, OrderedDict, Singleton
-from mxf.rp210 import RP210Exception, RP210
-from mxf.rp210types import Array, Reference, Integer, select_converter, RP210TypesException
+from sjmxf.common import InterchangeObject, OrderedDict, Singleton
+from sjmxf.rp210 import RP210Exception, RP210
+from sjmxf.rp210types import Array, Reference, Integer, select_converter, RP210TypesException
 
 class S377MException(Exception):
     """ Raised on non SMPTE 377M input. """
@@ -181,7 +181,7 @@ class MXFPrimer(InterchangeObject):
     def customize(primer, spec, mappings=None):
         """ Modifies a primer to abide @spec rules with optional @mappings.
 
-        @spec: instance of a mxf.rp210 like object
+        @spec: instance of a sjmxf.rp210 like object
         @mappings: a dictionary that is passed to inject method
 
         @returns: custimized Primer object.

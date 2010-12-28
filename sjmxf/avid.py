@@ -2,10 +2,10 @@
 
 """ Implements basic classes to parse Avid specific MXF objects. """
 
-from mxf.common import InterchangeObject, Singleton
-from mxf.s377m import MXFDataSet, MXFPrimer
-from mxf.rp210 import RP210Avid, RP210
-from mxf.rp210types import Reference, Integer
+from sjmxf.common import InterchangeObject, Singleton
+from sjmxf.s377m import MXFDataSet, MXFPrimer
+from sjmxf.rp210 import RP210Avid, RP210
+from sjmxf.rp210types import Reference, Integer
 
 class AvidObjectDirectory(InterchangeObject):
     """ Avid ObjectDirectory parser. """

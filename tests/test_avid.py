@@ -6,7 +6,7 @@
 import sys
 import unittest
 
-from mxf import avid, s377m
+from sjmxf import avid, s377m
 import test_s377m as testmxf
 
 

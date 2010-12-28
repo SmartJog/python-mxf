@@ -5,7 +5,7 @@
 
 VERSION = "@VERSION@"
 
-from mxf.parser import mxf_kind
+from sjmxf.parser import mxf_kind
 
 import optparse
 
