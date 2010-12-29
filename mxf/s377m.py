@@ -268,6 +268,12 @@ class MXFPrimer(InterchangeObject):
         except RP210Exception:
             return tag, value
 
+    def get_mapping(self, tag):
+        """ Shows Primer/RP210 mapping for @tag local tag. """
+
+        format_ul = self.data[tag]
+        return format_ul, self.rp210.get_triplet_from_format_ul(format_ul)
+
 
 class MXFDataSet(InterchangeObject):
     """ MXF parsing class specialized for loading Sets and Packs. """
