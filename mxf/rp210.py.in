@@ -96,7 +96,6 @@ class RP210(object):
         """ Convert @value according to @format_ul type. """
 
         eul = format_ul.encode('hex_codec')
-        edata = value.encode('hex_codec')
 
         if eul not in self.data.keys():
             print "Error: UL '%s' not found in SMPTE RP210." % eul
@@ -117,7 +116,7 @@ class RP210(object):
         else:
             raise RP210Exception("No converter for %s, %s" % (vtype, vname))
 
-        return "Cannot convert type %s: %s" % (eul, edata)
+        return "Cannot convert type %s: [%s]" % (eul, value)
 
 
 class RP210Avid(RP210):
