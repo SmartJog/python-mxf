@@ -15,6 +15,7 @@ class MXFParser(object):
     def __init__(self, filename):
         self.filename = filename
         self.fd = None
+        self.data = None
 
     def open(self):
         # SMTPE 377M: ability to skip over RunIn sequence
@@ -240,7 +241,7 @@ class MXFParser(object):
                 print klv
                 klv['klv'].human_readable(header_klvs_hash, indent=1)
 
-        return {
+        self.data = {
             'header': {
                 'partition': header_partition_pack,
                 'primer': header_metadata_primer_pack,
@@ -251,6 +252,7 @@ class MXFParser(object):
             'footer': {
                 'partition': footer_partition_pack,
                 'random_index': random_index_pack,
-            }
+            },
         }
+        return self.data
 
