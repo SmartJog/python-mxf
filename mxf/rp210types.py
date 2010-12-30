@@ -83,7 +83,7 @@ class Array(Converter, dict):
 
     def __str__(self):
         vector = self.read()
-        if len(vector):
+        if isinstance(vector, list) and len(vector) > 0:
             return 'Array of %d items of %d length in bytes.' % (len(vector), len(str(vector[0])))
         else:
             return 'Array of %d items.' % len(vector)
