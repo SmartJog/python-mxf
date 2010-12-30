@@ -65,7 +65,8 @@ class MXFParser(object):
                 header_metadata_primer_pack = MXFPrimer(fd, debug=True)
                 header_metadata_primer_pack.read()
                 print header_metadata_primer_pack
-                continue
+                klv = header_metadata_primer_pack
+                #continue
 
             elif key == '060e2b34025301010d01010101012f00':
                 # SMTPE 377M: Header Metadata (Preface)
@@ -80,7 +81,7 @@ class MXFParser(object):
                 # Avid ???
                 avid_metadata_preface = AvidMetadataPreface(fd, header_metadata_primer_pack)
                 avid_metadata_preface.read()
-                continue
+                klv = avid_metadata_preface
 
             elif key in (
              # 416 chunk (dark)
@@ -182,6 +183,8 @@ class MXFParser(object):
 
         ### End of the parsing loop 2
 
+        footer_klvs = []
+
         # SMTPE 377M: Footer Partition Pack
         if InterchangeObject.get_key(self.fd) != '060e2b34020501010d01020101040400':
             raise Exception('Invalid Footer Partition Pack key: %s' % InterchangeObject.get_key(self.fd))
@@ -195,6 +198,7 @@ class MXFParser(object):
             # KLV Fill item
             klv = KLVFill(fd)
             klv.read()
+            footer_klvs.append(klv)
             print ">>> Found KLVFill"
             #print klv
 
@@ -204,6 +208,7 @@ class MXFParser(object):
             raise Exception('Invalid RandomIndexMetadata key: %s' % InterchangeObject.get_key(self.fd))
         random_index_pack = RandomIndexMetadata(fd)
         random_index_pack.read()
+        footer_klvs.append(random_index_pack)
         print random_index_pack
 
         ### End of the parsing ###
@@ -245,13 +250,15 @@ class MXFParser(object):
             'header': {
                 'partition': header_partition_pack,
                 'primer': header_metadata_primer_pack,
+                'avid_preface': avid_metadata_preface,
                 'preface': header_metadata_preface,
-                'metadata': header_klvs,
+                'klvs': header_klvs,
             },
             'body': {},
             'footer': {
                 'partition': footer_partition_pack,
-                'random_index': random_index_pack,
+                'random_index_pack': random_index_pack,
+                'klvs': footer_klvs,
             },
         }
         return self.data
