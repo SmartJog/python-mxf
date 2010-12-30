@@ -41,7 +41,7 @@ class MXFParser(object):
 
         header_klvs = []
         header_klvs_hash = {}
-        header_end = self.fd.tell() + InterchangeObject.ber_decode_length(header_partition_pack.data['header_byte_count'], len(header_partition_pack.data['header_byte_count']))
+        header_end = self.fd.tell() + header_partition_pack.data['header_byte_count']
 
         header_metadata_preface = None
         avid_metadata_preface = None
