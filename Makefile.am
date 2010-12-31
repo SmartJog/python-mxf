@@ -1,3 +1,3 @@
-SUBDIRS = sjmxf data tests
+SUBDIRS = sjmxf data doc tests
 
 dist_bin_SCRIPTS = mxfloader

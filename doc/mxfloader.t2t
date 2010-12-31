@@ -1,0 +1,26 @@
+mxfloader
+mxfloader
+%%mtime
+
+%!target : man
+%!encoding : utf-8
+%!postproc(man): "^(\.TH.*) 1 "  "\1 1 "
+
+= NAME =
+
+mxfloader - Prints header metadata of MXF files
+
+= SYNOPSIS =
+
+**mxfloader** FILE
+
+= DESCRIPTION =
+
+**mxfloader** is a simple tool to dump the content of Header metadata of MXF
+files. It prints metadata in a human readable form for easy reading.
+
+= AUTHOR =
+
+The mxfloader and this manual page have been written by the
+**SmartJog** company.
+
