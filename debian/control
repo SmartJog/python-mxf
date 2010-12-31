@@ -5,7 +5,7 @@ Section: python
 Maintainer: Philippe Bridant <philippe.bridant@smartjog.com>
 Uploaders: Gilles Dartiguelongue <gilles.dartiguelongue@smartjog.com>
 Build-Depends: cdbs (>= 0.4.43), debhelper (>= 7), python-central (>= 0.6), txt2tags
-Standards-Version: 3.8.4
+Standards-Version: 3.9.1
 
 Package: python-mxf
 XB-Python-Version: ${python:Versions}
