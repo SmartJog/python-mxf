@@ -1,6 +1,6 @@
 AC_PREREQ(2.65)
 
-AC_INIT([python-mxf],[0.1.0~dev])
+AC_INIT([python-mxf],[0.1.0])
 
 AM_INIT_AUTOMAKE([foreign])
 
