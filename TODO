@@ -1,0 +1,5 @@
+ * Make S377M object expose/handle python data types only, avoid manipulating
+   RP210Types directly in write functions.
+ * Split avid specific content in python-avid module and create appropriate
+   registration mechanism so that various components of the three layers can be
+   dynamically detected and loaded.

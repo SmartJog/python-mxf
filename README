@@ -1,0 +1,64 @@
+What is python-sjxmf
+====================
+
+This package intends to provide buildings bricks for parsing and interpreting
+MXF files based on SMTPE specifications and most specifically SMPTE S377M-1-2009
+and SMPTE RP210-10-2007.
+
+This package intends to be easily extensible but it has not reached sufficient
+maturity in design yet to allow other packages to complete its 3 layer model
+with new parsing blocks.
+
+This package intends to provide tools to write MXF files as well but it current
+status makes it rather hard to use for that purpose.
+
+MXF Introduction
+================
+
+MXF is a file format constituted of a sequence of top level KLVs (Key Length
+Value) blocks. These blocks contain other KLVs which in turn may contain other
+KLVs or raw data.
+
+Through a mechanism of registration, MXF can be extended to store various data
+types and tools manipulating MXF files known which KLVs they can decode and
+which they can't.
+
+Module Design
+=============
+
+The module is designed as a three layer parser.
+
+The top layer is in charge of handling the Operational Pattern, the top level
+layout of an MXF file. Code for this part is found in parser.py.
+
+The middle layer is in charge of parsing the top level KLVs. It implements S377M
+specification and is supposed to make the manipulation of S377M objects easier
+from python. Code for this part is found in s377m.py.
+
+The bottom layer is in charge of parsing the content of each KLVs by
+implementing type converters for RP210 specification. It handles python to file
+format and file format to python conversions. Code for this part is found in
+rp210types.py.
+
+Walk-through
+============
+
+The package provides a simple MXF parsing tool which dumps the result of parsing
+to the standard output. Let's see how it works.
+
+First, the top layer opens the file and looks for SMTPE MXF 11 bytes marker in
+the first 64 kilobytes of the file to determine if it is actually MXF.
+It uses mxf_kind from parser.py to get an instance of the specific Operational
+Pattern (OP) parser class. This function determines the operational pattern by
+reading the header partition pack.
+
+Then, the OP parser goes through the file and creates appropriate S377M objects
+as it goes. These objects either:
+ * have a fixed (by specification) content, content is parsed using RP210Types
+   objects directly.
+ * use a Singleton RP210 instance to figure out how to parse content and create
+   the appropriate RP210Types objects via the select_converter function.
+
+The RP210Types objects can then be used to convert data from/to python types
+for easy manipulation.
+
