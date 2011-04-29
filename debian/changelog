@@ -1,3 +1,9 @@
+python-mxf (0.1.2~dev-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Gilles Dartiguelongue <gilles.dartiguelongue@smartjog.com>  Fri, 29 Apr 2011 16:07:53 +0200
+
 python-mxf (0.1.1-1) unstable; urgency=low
 
   [ Gilles Dartiguelongue ]
