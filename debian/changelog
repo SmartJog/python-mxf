@@ -1,4 +1,4 @@
-python-mxf (0.1.1~dev-1) unstable; urgency=low
+python-mxf (0.1.1-1) unstable; urgency=low
 
   [ Gilles Dartiguelongue ]
   * New upstream release.
@@ -7,7 +7,7 @@ python-mxf (0.1.1~dev-1) unstable; urgency=low
   * Update debian/control Build-Depends.
   * Add myself to Uploaders.
 
- -- Laurent Defert <laurent.defert@smartjog.com>  Wed, 24 Aug 2011 11:45:53 +0200
+ -- Laurent Defert <laurent.defert@smartjog.com>  Wed, 24 Aug 2011 11:47:48 +0200
 
 python-mxf (0.1.0-1) unstable; urgency=low
 
