@@ -1,10 +1,10 @@
 Source: python-mxf
-XS-Python-Version: >= 2.5
+XS-Python-Version: >= 2.6
 Priority: optional
 Section: python
 Maintainer: Philippe Bridant <philippe.bridant@smartjog.com>
-Uploaders: Gilles Dartiguelongue <gilles.dartiguelongue@smartjog.com>
-Build-Depends: cdbs (>= 0.4.43), debhelper (>= 7), python-central (>= 0.6), txt2tags
+Uploaders: Gilles Dartiguelongue <gilles.dartiguelongue@smartjog.com>, Laurent Defert <laurent.defert@smartjog.com>
+Build-Depends: cdbs (>= 0.4.89), debhelper (>= 8), python-central (>= 0.6), txt2tags
 Standards-Version: 3.9.1
 
 Package: python-mxf
